@@ -1,0 +1,55 @@
+<!-- src/app/components/spend-list/spend-list.component.html -->
+<div class="container mt-4">
+  <h2>Lista de Gastos</h2>
+
+  <div class="mb-3">
+    <a routerLink="/spends/create" class="btn btn-success">
+      Novo Gasto
+    </a>
+  </div>
+
+  <div *ngIf="loading" class="alert alert-info">Carregando...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <table class="table table-striped" *ngIf="!loading && !error">
+    <thead>
+    <tr>
+      <th>Nome</th>
+      <th>Descrição</th>
+      <th>Valor</th>
+      <th>Categoria</th>
+      <th>Vencimento</th>
+      <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let spend of spends">
+      <td>{{ spend.name }}</td>
+      <td>{{ spend.description }}</td>
+      <td>{{ spend.amount | currency:'BRL' }}</td>
+      <td>{{ spend.categoryName }}</td>
+      <td>{{ spend.dueDate | date:'dd/MM/yyyy' }}</td>
+      <td>
+          <span class="badge" [ngClass]="{
+            'bg-danger': spend.isDue && !spend.isPaid,
+            'bg-success': spend.isPaid,
+            'bg-warning': !spend.isDue && !spend.isPaid
+          }">
+            {{ spend.isPaid ? 'Pago' : spend.isDue ? 'Vencido' : 'Pendente' }}
+          </span>
+        <span *ngIf="spend.isRecurring" class="badge bg-info ms-2">Recorrente</span>
+      </td>
+    </tr>
+    </tbody>
+    <tfoot *ngIf="spends.length > 0">
+    <tr>
+      <td colspan="2.5" class="text-end fw-bold">Total:</td>
+      <td class="fw-bold">{{ total | currency:'BRL' }}</td>
+      <td colspan="2"></td>
+    </tr>
+    </tfoot>
+  </table>
+  <div *ngIf="!loading && spends.length === 0" class="alert alert-info">
+    Nenhum gasto registrado
+  </div>
+</div>
