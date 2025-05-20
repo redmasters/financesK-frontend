@@ -1,6 +1,40 @@
 <div class="container mt-4">
   <h2>Lista de Categorias</h2>
 
+  <div class="mb-3">
+    <div class="input-group">
+      <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="searchTerm"
+        placeholder="Buscar por nome"
+        (keyup.enter)="searchCategories()"
+      >
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="searchCategories()"
+      >
+        🔍 Buscar
+      </button>
+      <button
+        class="btn btn-outline-danger"
+        type="button"
+        (click)="clearSearch()"
+        [disabled]="!searchTerm"
+      >
+        Limpar
+      </button>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <a routerLink="/categories/create" class="btn btn-success">
+      Nova Categoria
+    </a>
+  </div>
+
+
   <div *ngIf="loading" class="alert alert-info">Carregando...</div>
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
 
@@ -15,7 +49,10 @@
     <tbody>
     <tr *ngFor="let category of categories">
       <td>{{ category.id }}</td>
-      <td>{{ category.name }}</td>
+      <td>
+        <a [routerLink]="['/categories', category.id]">
+          {{ category.name }}
+        </a>
       <td>{{ category.description }}</td>
     </tr>
     </tbody>

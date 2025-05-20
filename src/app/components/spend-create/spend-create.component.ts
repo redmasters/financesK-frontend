@@ -1,8 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
-import {ApiService} from '../../services/api.service';
+import {ApiService, Category, SpendStatus} from '../../services/api.service';
 import {Router} from '@angular/router';
+import {forkJoin} from 'rxjs';
 
 @Component({
   selector: 'app-spend-create',
@@ -12,7 +13,8 @@ import {Router} from '@angular/router';
   styleUrl: './spend-create.component.css'
 })
 export class SpendCreateComponent implements OnInit {
-  categories: any[] = [];
+  categories: Category[] = [];
+  statuses: SpendStatus[] = [];
   formData = {
     name: '',
     description: '',
@@ -21,7 +23,8 @@ export class SpendCreateComponent implements OnInit {
     categoryId: 0,
     isDue: false,
     isPaid: false,
-    isRecurring: false
+    isRecurring: false,
+    statusId: 0
   };
   error = '';
 
@@ -31,16 +34,34 @@ export class SpendCreateComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.apiService.getCategories().subscribe({
-      next: (categories) => this.categories = categories,
-      error: (err) =>
-        this.error = 'Failed to load categories'
-    });
+    forkJoin([
+      this.apiService.getCategories(),
+      this.apiService.getAllStatuses()
+    ]).subscribe({
+      next: ([categories, statuses]) => {
+        this.categories = categories;
+        this.statuses = statuses;
+      },
+      error: () => {
+        this.error = 'Failed to load categories or statuses';
+      }
+    })
   }
 
   onSubmit(): void {
-    if(!this.validateForm()) return;
-    this.apiService.createSpend(this.formData)
+    const selectedStatus = this.statuses
+      .find(status => status.id === this.formData.statusId);
+    if (!selectedStatus) {
+      this.error = 'Status is required';
+      return;
+    }
+    const spendPayLoad = {
+      ...this.formData,
+      statusId: selectedStatus
+    }
+
+    if (!this.validateForm()) return;
+    this.apiService.createSpend(spendPayLoad)
       .subscribe({
         next: () => {
           this.router.navigate(['/spends']);
@@ -50,6 +71,7 @@ export class SpendCreateComponent implements OnInit {
         }
       });
   }
+
   private validateForm(): boolean {
     if (!this.formData.name) {
       this.error = 'Name is required';
@@ -70,4 +92,7 @@ export class SpendCreateComponent implements OnInit {
     return true;
   }
 
+  onCancel() {
+    this.router.navigate(['/spends']);
+  }
 }

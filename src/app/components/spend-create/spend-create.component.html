@@ -65,6 +65,24 @@
       </div>
     </div>
 
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Status *</label>
+      <select
+        class="form-select"
+        [(ngModel)]="formData.statusId"
+        name="statusId"
+        required
+      >
+        <option value="">Selecione...</option>
+        <option
+          *ngFor="let status of statuses"
+          [value]="status.id"
+        >
+          {{ status.name }}
+        </option>
+      </select>
+    </div>
+
     <div class="row mb-3">
       <div class="col">
         <div class="form-check">
@@ -109,6 +127,10 @@
 
     <button type="submit" class="btn btn-primary">
       Registrar Gasto
+    </button>
+
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">
+      Cancelar
     </button>
   </form>
 </div>

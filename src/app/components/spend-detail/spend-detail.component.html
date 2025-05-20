@@ -1,0 +1,41 @@
+<div class="container mt-4">
+  <div *ngIf="loading" class="alert alert-info">Carregando...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="spend" class="card">
+    <div class="card-body">
+      <h5 class="card-title">{{ spend.name }}</h5>
+      <p class="card-text">{{ spend.description }}</p>
+
+      <dl class="row">
+        <dt class="col-sm-3">Valor:</dt>
+        <dd class="col-sm-9">{{ spend.amount | currency:'BRL' }}</dd>
+
+        <dt class="col-sm-3">Vencimento:</dt>
+        <dd class="col-sm-9">{{ spend.dueDate | date:'dd/MM/yyyy' }}</dd>
+
+        <dt class="col-sm-3">Categoria:</dt>
+        <dd class="col-sm-9">{{ spend.categoryId | categoryName:categories}}</dd>
+
+        <dt class="col-sm-3">Status:</dt>
+        <dd class="col-sm-9">
+          <span class="badge" [ngClass]="statusClass(spend.status?.name)">
+            {{ spend.status.name }}
+          </span>
+        </dd>
+
+        <dt class="col-sm-3">Recorrente:</dt>
+        <dd class="col-sm-9">{{ spend.isRecurring ? 'Sim' : 'Não' }}</dd>
+      </dl>
+
+      <div class="mt-3">
+        <a [routerLink]="['/spends', spend.id, 'edit']" class="btn btn-primary me-2">
+          Editar
+        </a>
+        <button class="btn btn-danger" (click)="deleteSpend()">
+          Excluir
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

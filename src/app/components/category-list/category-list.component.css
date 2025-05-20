@@ -1,0 +1,8 @@
+.input-group {
+  max-width: 400px;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
+}

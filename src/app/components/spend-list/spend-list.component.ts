@@ -1,12 +1,13 @@
 import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RouterModule} from '@angular/router';
-import {ApiService} from '../../services/api.service';
+import {ApiService, Category, SpendStatus} from '../../services/api.service';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-spend-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './spend-list.component.html',
   styleUrl: './spend-list.component.css'
 })
@@ -16,6 +17,7 @@ export class SpendListComponent implements OnInit {
   loading = true;
   error = '';
   total = 0;
+
 
   constructor(private apiService: ApiService) {
   }
@@ -57,5 +59,16 @@ private loadCategories(): void {
     const category = this.categories.find(cat => cat.id === categoryId);
     return category ? category.name : 'Unknown';
   }
+
+  statusClass(statusName?: string): string {
+    if(!statusName) return 'bg-secondary';
+
+    return {
+      'PENDING': 'bg-warning',
+      'PAID': 'bg-success',
+      'OVERDUE': 'bg-danger'
+    }[statusName] || 'bg-secondary';
+  }
+
 }
 

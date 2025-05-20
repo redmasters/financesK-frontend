@@ -1,4 +1,3 @@
-<!-- src/app/components/spend-list/spend-list.component.html -->
 <div class="container mt-4">
   <h2>Lista de Gastos</h2>
 
@@ -10,6 +9,22 @@
 
   <div *ngIf="loading" class="alert alert-info">Carregando...</div>
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <select class="form-select" [(ngModel)]="selectedCategory" (change)="filterByCategory()">
+        <option value="">Filtrar por categoria</option>
+        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterByStatus()">
+        <option value="">Filtrar por status</option>
+        <option *ngFor="let status of statuses" [value]="status.name">{{ status.name }}</option>
+      </select>
+    </div>
+  </div>
 
   <table class="table table-striped" *ngIf="!loading && !error">
     <thead>
@@ -35,6 +50,10 @@
             'bg-success': spend.isPaid,
             'bg-warning': !spend.isDue && !spend.isPaid
           }">
+
+            <span class="badge" [ngClass]="statusClass(spend.status.name)">
+    {{ spend.status.name }}
+  </span>
             {{ spend.isPaid ? 'Pago' : spend.isDue ? 'Vencido' : 'Pendente' }}
           </span>
         <span *ngIf="spend.isRecurring" class="badge bg-info ms-2">Recorrente</span>
