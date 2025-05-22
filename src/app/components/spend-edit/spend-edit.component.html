@@ -86,7 +86,7 @@
           <option
             *ngFor="let status of statuses"
             [value]="status.id"
-            [selected]="status.id === spend.status?.id"
+            [selected]="status.id === spend.status.id"
           >
             {{ status.name }}
           </option>
