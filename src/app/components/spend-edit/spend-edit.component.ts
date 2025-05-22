@@ -13,7 +13,21 @@ import {CommonModule} from '@angular/common';
   styleUrl: './spend-edit.component.css'
 })
 export class SpendEditComponent implements OnInit {
-  spend: Spend = {} as Spend;
+  spend: Spend = {
+    id: 0,
+    name: '',
+    description: '',
+    amount: 0,
+    dueDate: '',
+    categoryId: 0,
+    isDue: false,
+    isPaid: false,
+    isRecurring: false,
+    status: {
+      id: 0,
+      name: ''
+    }
+  }
   categories: Category[] = [];
   statuses: SpendStatus[] = [];
   loading = true;
@@ -23,7 +37,8 @@ export class SpendEditComponent implements OnInit {
     private apiService: ApiService,
     private route: Router,
     private routes: ActivatedRoute
-  ) {}
+  ) {
+  }
 
   ngOnInit() {
     const id = this.routes.snapshot.params['id'];
@@ -47,12 +62,23 @@ export class SpendEditComponent implements OnInit {
   }
 
   onSubmit() {
-    if(!this.validadeForm()) return;
+    if (!this.validadeForm()) return;
 
-    this.apiService.updateSpend(this.spend.id!, this.spend).subscribe({
+    const payload = {
+      ...this.spend,
+      categoryId: this.spend.categoryId,
+      statusId: this.spend.status?.id
+    }
+
+
+    this.apiService.updateSpend(this.spend.id!, payload).subscribe({
       next: () => this.route.navigate(['/spends', this.spend.id]),
       error: () => this.error = 'Failed to update spend'
     })
+  }
+
+  onCancel() {
+    this.route.navigate(['/spends', this.spend.id]);
   }
 
   validadeForm() {

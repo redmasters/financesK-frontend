@@ -57,7 +57,8 @@ export class SpendDetailComponent implements OnInit {
     }
   }
 
-  statusClass(statusName: string): string {
+  statusClass(statusName?: string): string {
+    if(!statusName) return 'bg-secondary';
     return {
       'PENDING': 'bg-warning',
       'PAID': 'bg-success',
@@ -65,5 +66,7 @@ export class SpendDetailComponent implements OnInit {
     }[statusName] || 'bg-secondary';
   }
 
-  protected readonly name = name;
+  onCancel() {
+    this.router.navigate(['/spends']);
+  }
 }

@@ -12,23 +12,48 @@
 
   <div class="row mb-3">
     <div class="col-md-4">
-      <select class="form-select" [(ngModel)]="selectedCategory" (change)="filterByCategory()">
+      <select
+        class="form-select"
+        [(ngModel)]="selectedCategory"
+        (change)="filterByCategory()"
+      >
         <option value="">Filtrar por categoria</option>
-        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+        <option *ngFor="let cat of categories" [value]="cat.id">
+          {{ cat.name }}
+        </option>
       </select>
     </div>
 
     <div class="col-md-4">
-      <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterByStatus()">
+      <select
+        class="form-select"
+        [(ngModel)]="selectedStatus"
+        (change)="filterByStatus()"
+      >
         <option value="">Filtrar por status</option>
-        <option *ngFor="let status of statuses" [value]="status.name">{{ status.name }}</option>
+        <option *ngFor="let status of statuses" [value]="status.name">
+          {{ status.name }}
+        </option>
       </select>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Buscar por status"
+        [(ngModel)]="statusSearch"
+        (keyup.enter)="loadData('status')"
+      >
     </div>
   </div>
 
   <table class="table table-striped" *ngIf="!loading && !error">
     <thead>
     <tr>
+      <th>Id</th>
       <th>Nome</th>
       <th>Descrição</th>
       <th>Valor</th>
@@ -39,7 +64,11 @@
     </thead>
     <tbody>
     <tr *ngFor="let spend of spends">
-      <td>{{ spend.name }}</td>
+      <td>{{ spend.id}}</td>
+      <td>
+        <a [routerLink]="['/spends', spend.id]">
+          {{ spend.name }}
+        </a>
       <td>{{ spend.description }}</td>
       <td>{{ spend.amount | currency:'BRL' }}</td>
       <td>{{ spend.categoryName }}</td>
@@ -62,7 +91,7 @@
     </tbody>
     <tfoot *ngIf="spends.length > 0">
     <tr>
-      <td colspan="2.5" class="text-end fw-bold">Total:</td>
+      <td colspan="3.5" class="text-end fw-bold">Total:</td>
       <td class="fw-bold">{{ total | currency:'BRL' }}</td>
       <td colspan="2"></td>
     </tr>

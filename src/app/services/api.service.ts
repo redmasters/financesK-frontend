@@ -86,7 +86,6 @@ export class ApiService {
     isDue: boolean;
     isPaid: boolean;
     isRecurring: boolean;
-    statusId: SpendStatus
   }): Observable<Spend> {
     return this.http.post<Spend>(`${this.apiUrl}/spend`, spendData);
   }

@@ -23,8 +23,7 @@ export class SpendCreateComponent implements OnInit {
     categoryId: 0,
     isDue: false,
     isPaid: false,
-    isRecurring: false,
-    statusId: 0
+    isRecurring: false
   };
   error = '';
 
@@ -49,15 +48,9 @@ export class SpendCreateComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const selectedStatus = this.statuses
-      .find(status => status.id === this.formData.statusId);
-    if (!selectedStatus) {
-      this.error = 'Status is required';
-      return;
-    }
+
     const spendPayLoad = {
-      ...this.formData,
-      statusId: selectedStatus
+      ...this.formData
     }
 
     if (!this.validateForm()) return;

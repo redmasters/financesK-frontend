@@ -20,7 +20,7 @@
         <dt class="col-sm-3">Status:</dt>
         <dd class="col-sm-9">
           <span class="badge" [ngClass]="statusClass(spend.status?.name)">
-            {{ spend.status.name }}
+            {{ spend.status?.name || 'Sem status' }}
           </span>
         </dd>
 
@@ -32,10 +32,15 @@
         <a [routerLink]="['/spends', spend.id, 'edit']" class="btn btn-primary me-2">
           Editar
         </a>
-        <button class="btn btn-danger" (click)="deleteSpend()">
+        <button class="btn btn-danger me-2" (click)="deleteSpend()">
           Excluir
         </button>
+        <!-- Cancelar -->
+        <button class="btn btn-secondary" (click)="onCancel()">
+          Cancelar
+        </button>
       </div>
+
     </div>
   </div>
 </div>
