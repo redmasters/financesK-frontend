@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import { environment } from '../../environments/environment'
 
@@ -27,19 +27,13 @@ export interface Spend {
   status: SpendStatus
 }
 
-export interface SpendResponse {
-  id: number;
-  name: string;
-  description: string;
-  amount: number;
-  dueDate: string;
-  categoryId: number;
-  isDue: boolean;
-  isPaid: boolean;
-  isRecurring: boolean;
-  status: SpendStatus;
+export interface SpendSearchParams {
+  startDate?: any;
+  endDate?: any;
+  isPaid?: boolean | null;
+  isDue?: boolean | null;
+  categoryId?: number | null;
 }
-
 
 @Injectable({
   providedIn: 'root'
@@ -117,6 +111,25 @@ export class ApiService {
 
   deleteSpend(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/spend/${id}`);
+  }
+
+  searchSpends(params: SpendSearchParams): Observable<Spend[]> {
+    let httpParams = new HttpParams()
+      .set('startDate', params.startDate)
+      .set('endDate', params.endDate)
+
+    if(params.isPaid !== undefined && params.isPaid !== null) {
+      httpParams = httpParams.set('isPaid', params.isPaid);
+    }
+
+    if(params.isDue !== undefined && params.isDue !== null) {
+      httpParams = httpParams.set('isDue', params.isDue);
+    }
+
+    if(params.categoryId !== undefined && params.categoryId !== null) {
+      httpParams = httpParams.set('categoryId', params.categoryId);
+    }
+    return this.http.get<Spend[]>(`${this.apiUrl}/spend/search`, { params: httpParams });
   }
 
 }

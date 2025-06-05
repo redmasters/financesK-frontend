@@ -1,0 +1,9 @@
+/* spend-list.component.css */
+.date-filter-group {
+  display: flex;
+  gap: 5px;
+}
+
+.date-filter-group input {
+  flex: 1;
+}

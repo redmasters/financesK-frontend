@@ -1,9 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RouterModule} from '@angular/router';
-import {ApiService, Category, SpendStatus} from '../../services/api.service';
+import {ApiService, SpendSearchParams, SpendStatus} from '../../services/api.service';
 import {FormsModule} from '@angular/forms';
-import {privateDecrypt} from 'node:crypto';
 
 @Component({
   selector: 'app-spend-list',
@@ -25,11 +24,33 @@ export class SpendListComponent implements OnInit {
   total = 0;
   statusSearch?: any;
 
+  searchParams: SpendSearchParams = {
+    startDate: '',
+    endDate: '',
+    isPaid: null
+  }
+
   constructor(private apiService: ApiService) {
   }
 
   ngOnInit(): void {
-    this.loadData();
+    this.setCurrentMonthDates();
+    // this.loadData();
+    this.loadSpends();
+  }
+
+  loadSpends(): void {
+    this.apiService.searchSpends(this.searchParams).subscribe({
+      next: (spends) => {
+        this.spends = spends;
+        this.calculateTotal();
+        this.loadCategories();
+      },
+      error: () => {
+        this.error = 'Failed to load spends';
+        this.loading = false;
+      }
+    });
   }
 
   private calculateTotal(): void {
@@ -123,5 +144,25 @@ export class SpendListComponent implements OnInit {
     }
   }
 
+  private setCurrentMonthDates() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    this.searchParams.startDate = this.formatDate(firstDay);
+    this.searchParams.endDate = this.formatDate(lastDay);
+
+  }
+
+private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  resetFilters(): void {
+    this.setCurrentMonthDates();
+    this.searchParams.categoryId = undefined;
+    this.searchParams.isPaid = undefined;
+    this.loadSpends();
+  }
 }
 

@@ -7,17 +7,16 @@
     </a>
   </div>
 
-  <div *ngIf="loading" class="alert alert-info">Carregando...</div>
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
-
+  <!-- Filtros adicionais -->
   <div class="row mb-3">
     <div class="col-md-4">
+      <label class="form-label">Categoria</label>
       <select
         class="form-select"
-        [(ngModel)]="selectedCategory"
-        (change)="filterByCategory()"
+        [(ngModel)]="searchParams.categoryId"
+        (change)="loadSpends()"
       >
-        <option value="">Filtrar por categoria</option>
+        <option [value]="undefined">Todas categorias</option>
         <option *ngFor="let cat of categories" [value]="cat.id">
           {{ cat.name }}
         </option>
@@ -25,30 +24,87 @@
     </div>
 
     <div class="col-md-4">
+      <label class="form-label">Status de Vencimento</label>
       <select
         class="form-select"
-        [(ngModel)]="selectedStatus"
-        (change)="filterByStatus()"
+        [(ngModel)]="searchParams.isDue"
+        (change)="loadSpends()"
       >
-        <option value="">Filtrar por status</option>
-        <option *ngFor="let status of statuses" [value]="status.name">
-          {{ status.name }}
-        </option>
+        <option [value]="null">Todos</option>
+        <option [value]="true">Vencidos</option>
+        <option [value]="false">Não vencidos</option>
       </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Período</label>
+      <div class="input-group">
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="searchParams.startDate"
+        >
+        <span class="input-group-text">até</span>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="searchParams.endDate"
+        >
+        <button
+          class="btn btn-primary"
+          (click)="loadSpends()"
+        >
+          Aplicar
+        </button>
+        <button class="btn btn-secondary" (click)="resetFilters()">
+          Limpar Filtros
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="row mb-3">
-    <div class="col-md-4">
-      <input
-        type="text"
-        class="form-control"
-        placeholder="Buscar por status"
-        [(ngModel)]="statusSearch"
-        (keyup.enter)="loadData('status')"
-      >
-    </div>
-  </div>
+  <div *ngIf="loading" class="alert alert-info">Carregando...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+<!--  <div class="row mb-3">-->
+<!--    <div class="col-md-4">-->
+<!--      <select-->
+<!--        class="form-select"-->
+<!--        [(ngModel)]="selectedCategory"-->
+<!--        (change)="filterByCategory()"-->
+<!--      >-->
+<!--        <option value="">Filtrar por categoria</option>-->
+<!--        <option *ngFor="let cat of categories" [value]="cat.id">-->
+<!--          {{ cat.name }}-->
+<!--        </option>-->
+<!--      </select>-->
+<!--    </div>-->
+
+<!--    <div class="col-md-4">-->
+<!--      <select-->
+<!--        class="form-select"-->
+<!--        [(ngModel)]="selectedStatus"-->
+<!--        (change)="filterByStatus()"-->
+<!--      >-->
+<!--        <option value="">Filtrar por status</option>-->
+<!--        <option *ngFor="let status of statuses" [value]="status.name">-->
+<!--          {{ status.name }}-->
+<!--        </option>-->
+<!--      </select>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  <div class="row mb-3">-->
+<!--    <div class="col-md-4">-->
+<!--      <input-->
+<!--        type="text"-->
+<!--        class="form-control"-->
+<!--        placeholder="Buscar por status"-->
+<!--        [(ngModel)]="statusSearch"-->
+<!--        (keyup.enter)="loadData('status')"-->
+<!--      >-->
+<!--    </div>-->
+<!--  </div>-->
 
   <table class="table table-striped" *ngIf="!loading && !error">
     <thead>
@@ -64,7 +120,7 @@
     </thead>
     <tbody>
     <tr *ngFor="let spend of spends">
-      <td>{{ spend.id}}</td>
+      <td>{{ spend.id }}</td>
       <td>
         <a [routerLink]="['/spends', spend.id]">
           {{ spend.name }}
