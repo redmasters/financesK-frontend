@@ -1,0 +1,17 @@
+.columns.is-gapless {
+  min-height: 100vh;
+  margin: 0;
+
+  .column.is-narrow {
+    width: 250px; /* Largura fixa para a sidebar */
+    background-color: #f8f9fa; /* Cor de fundo da sidebar */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .column:not(.is-narrow) {
+    padding: 20px;
+    background-color: #f1f5f9; /* Cor de fundo do conteúdo */
+    margin-left: 250px; /* Compensar a largura da sidebar */
+    width: calc(100% - 250px);
+  }
+}
