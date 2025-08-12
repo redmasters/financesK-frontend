@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyFinance - Controle Financeiro Pessoal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ant-design-icons/4.7.0/font/antd.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-width: 240px;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .sidebar {
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            color: white;
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            position: fixed;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.9rem 1.5rem;
+            color: rgba(255,255,255,0.85);
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.08);
+            color: white;
+            border-left: 3px solid white;
+        }
+        
+        .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+        
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        .balance-card {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .card-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .card-value {
+            font-size: 1.85rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .balance-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+        
+        .positive-balance {
+            color: var(--success);
+        }
+        
+        .negative-balance {
+            color: var(--danger);
+        }
+        
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        .bg-primary-light {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .bg-success-light {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .bg-warning-light {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .bg-danger-light {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .bg-info-light {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+        
+        .expense-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .type-avulso {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--info);
+        }
+        
+        .type-rec {
+            background: rgba(67, 97, 238, 0.15);
+            color: var(--primary);
+        }
+        
+        .type-parc {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+        
+        .type-income {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+        
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.25rem 1rem;
+            border-radius: 10px;
+            background: var(--light);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+        
+        .category-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .category-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: var(--light);
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            font-weight: 500;
+        }
+        
+        .ant-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .ant-table th {
+            text-align: left;
+            padding: 0.85rem 1rem;
+            color: var(--gray);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .ant-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .income-row td:first-child {
+            border-left: 3px solid var(--success);
+        }
+        
+        .expense-row td:first-child {
+            border-left: 3px solid var(--danger);
+        }
+        
+        .ant-tag {
+            border-radius: 20px;
+            font-size: 0.8rem;
+            padding: 0.15rem 0.75rem;
+        }
+        
+        .ant-modal {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .ant-modal-content {
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        
+        .ant-modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem;
+        }
+        
+        .ant-modal-body {
+            padding: 1.5rem;
+        }
+        
+        .ant-modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .ant-radio-group {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .ant-radio-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        
+        .ant-radio-inner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d9d9d9;
+        }
+        
+        .ant-radio-checked .ant-radio-inner {
+            border-color: var(--primary);
+        }
+        
+        .ant-radio-inner::after {
+            background-color: var(--primary);
+            width: 10px;
+            height: 10px;
+            top: 2px;
+            left: 2px;
+        }
+        
+        .ant-btn {
+            padding: 0.65rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+        
+        .ant-btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .ant-btn-primary:hover {
+            background: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .ant-btn-success {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        .ant-btn-success:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+        
+        .ant-btn-default {
+            background: white;
+            border-color: #d9d9d9;
+        }
+        
+        .ant-input, .ant-select-selector, .ant-picker {
+            border-radius: 8px !important;
+            padding: 0.85rem !important;
+            border: 1px solid var(--border) !important;
+            font-size: 1rem;
+        }
+        
+        .ant-input:focus, .ant-select-focused .ant-select-selector, .ant-picker-focused {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15) !important;
+        }
+        
+        .ant-form-item {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--dark);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .progress-danger {
+            background: var(--danger);
+        }
+        
+        .progress-warning {
+            background: var(--warning);
+        }
+        
+        .progress-success {
+            background: var(--success);
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding-top: 0.5rem;
+        }
+        
+        .summary-value {
+            font-weight: 600;
+        }
+        
+        .income-value {
+            color: var(--success);
+        }
+        
+        .expense-value {
+            color: var(--danger);
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .logo span {
+                display: none;
+            }
+            
+            .nav-link span {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .balance-card {
+                grid-column: span 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+            
+            .tab {
+                padding: 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="columns is-gapless">
+        <!-- Sidebar -->
+        <div class="column is-narrow">
+            <div class="sidebar">
+                <div class="logo">
+                    <i class="fas fa-wallet"></i>
+                    <span>MyFinance</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Relatórios</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-tags"></i>
+                        <span>Categorias</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>Histórico</span>
+                    </a>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Configurações</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="column">
+            <div class="main-content">
+                <div class="level">
+                    <div class="level-left">
+                        <div>
+                            <h1 class="title is-2 has-text-weight-bold">Controle Financeiro</h1>
+                            <p class="subtitle is-6 has-text-grey">Gerencie seus gastos e acompanhe seu saldo mensal</p>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="buttons">
+                            <button class="ant-btn ant-btn-success" id="addIncomeBtn">
+                                <i class="fas fa-plus-circle"></i> Adicionar Entrada
+                            </button>
+                            <button class="ant-btn ant-btn-primary" id="addExpenseBtn">
+                                <i class="fas fa-plus"></i> Adicionar Gasto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards">
+                    <!-- Saldo do Mês -->
+                    <div class="box balance-card">
+                        <div>
+                            <div class="card-title">SALDO DO MÊS</div>
+                            <div class="balance-value positive-balance">R$ 2.050,80</div>
+                            <div class="card-subtitle">Atualizado em 20/07/2023</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-success" style="width: 68%"></div>
+                        </div>
+                        <div class="card-subtitle">68% do mês decorrido | 32% do saldo restante</div>
+                    </div>
+                    
+                    <!-- Salário -->
+                    <div class="box">
+                        <div class="card-icon bg-success-light">
+                            <i class="fas fa-money-check"></i>
+                        </div>
+                        <div class="card-title">SALÁRIO</div>
+                        <div class="card-value">R$ 4.500,00</div>
+                        <div class="card-subtitle">Recebido em 05/07/2023</div>
+                    </div>
+                    
+                    <!-- Gastos Totais -->
+                    <div class="box">
+                        <div class="card-icon bg-danger-light">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="card-title">GASTOS TOTAIS</div>
+                        <div class="card-value">R$ 2.450,80</div>
+                        <div class="card-subtitle">54% do seu salário</div>
+                    </div>
+                    
+                    <!-- Gastos Recorrentes -->
+                    <div class="box">
+                        <div class="card-icon bg-warning-light">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="card-title">GASTOS RECORRENTES</div>
+                        <div class="card-value">R$ 980,00</div>
+                        <div class="card-subtitle">22% do salário</div>
+                    </div>
+                    
+                    <!-- Gastos Parcelados -->
+                    <div class="box">
+                        <div class="card-icon bg-info-light">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="card-title">GASTOS PARCELADOS</div>
+                        <div class="card-value">R$ 320,50</div>
+                        <div class="card-subtitle">7% do salário</div>
+                    </div>
+                </div>
+                
+                <!-- Resumo Financeiro -->
+                <div class="columns">
+                    <div class="column is-4">
+                        <div class="box">
+                            <h2 class="title is-4">Resumo Financeiro</h2>
+                            
+                            <div class="summary-item">
+                                <span>Salário:</span>
+                                <span class="summary-value income-value">R$ 4.500,00</span>
+                            </div>
+                            
+                            <div class="summary-item">
+                                <span>Outras entradas:</span>
+                                <span class="summary-value income-value">R$ 0,00</span>
+                            </div>
+                            
+                            <div class="form-section-title">Gastos</div>
+                            
+                            <div class="summary-item">
+                                <span>Recorrentes:</span>
+                                <span class="summary-value expense-value">R$ 980,00</span>
+                            </div>
+                            
+                            <div class="summary-item">
+                                <span>Parcelados:</span>
+                                <span class="summary-value expense-value">R$ 320,50</span>
+                            </div>
+                            
+                            <div class="summary-item">
+                                <span>Avulsos:</span>
+                                <span class="summary-value expense-value">R$ 1.150,30</span>
+                            </div>
+                            
+                            <div class="summary-item summary-total">
+                                <span>Saldo atual:</span>
+                                <span class="summary-value positive-balance">R$ 2.050,80</span>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <div class="card-title">PROJEÇÃO DO SALDO</div>
+                                <div class="card-value positive-balance">R$ 1.820,30</div>
+                                <div class="card-subtitle">Saldo estimado no final do mês</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column">
+                        <!-- Expenses Table -->
+                        <div class="box">
+                            <div class="level">
+                                <div class="level-left">
+                                    <h2 class="title is-4">Movimentações Recentes</h2>
+                                </div>
+                                <div class="level-right">
+                                    <div class="tabs">
+                                        <div class="tab active">Todos</div>
+                                        <div class="tab">Entradas</div>
+                                        <div class="tab">Saídas</div>
+                                        <div class="tab">Recorrentes</div>
+                                        <div class="tab">Parcelados</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="ant-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Descrição</th>
+                                            <th>Tipo</th>
+                                            <th>Categoria</th>
+                                            <th>Valor</th>
+                                            <th>Data</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Entrada - Salário -->
+                                        <tr class="income-row">
+                                            <td>Salário</td>
+                                            <td><span class="expense-type type-income">Entrada</span></td>
+                                            <td><span class="category-tag"><i class="fas fa-money-bill-wave"></i> Salário</span></td>
+                                            <td class="income-value">+ R$ 4.500,00</td>
+                                            <td>05/07/2023</td>
+                                            <td>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-edit"></i></button>
+                                            </td>
+                                        </tr>
+                                        
+                                        <!-- Gastos -->
+                                        <tr class="expense-row">
+                                            <td>Aluguel</td>
+                                            <td><span class="expense-type type-rec">Recorrente</span></td>
+                                            <td><span class="category-tag"><i class="fas fa-home"></i> Moradia</span></td>
+                                            <td class="expense-value">- R$ 850,00</td>
+                                            <td>05/07/2023</td>
+                                            <td>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-edit"></i></button>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr class="expense-row">
+                                            <td>Smartphone</td>
+                                            <td><span class="expense-type type-parc">Parcelado (5/10)</span></td>
+                                            <td><span class="category-tag"><i class="fas fa-mobile-alt"></i> Eletrônicos</span></td>
+                                            <td class="expense-value">- R$ 120,50</td>
+                                            <td>10/07/2023</td>
+                                            <td>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-edit"></i></button>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr class="expense-row">
+                                            <td>Supermercado</td>
+                                            <td><span class="expense-type type-avulso">Avulso</span></td>
+                                            <td><span class="category-tag"><i class="fas fa-shopping-cart"></i> Alimentação</span></td>
+                                            <td class="expense-value">- R$ 280,30</td>
+                                            <td>12/07/2023</td>
+                                            <td>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-edit"></i></button>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr class="expense-row">
+                                            <td>Netflix</td>
+                                            <td><span class="expense-type type-rec">Recorrente</span></td>
+                                            <td><span class="category-tag"><i class="fas fa-tv"></i> Entretenimento</span></td>
+                                            <td class="expense-value">- R$ 39,90</td>
+                                            <td>15/07/2023</td>
+                                            <td>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-edit"></i></button>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr class="expense-row">
+                                            <td>Restaurante</td>
+                                            <td><span class="expense-type type-avulso">Avulso</span></td>
+                                            <td><span class="category-tag"><i class="fas fa-utensils"></i> Alimentação</span></td>
+                                            <td class="expense-value">- R$ 95,00</td>
+                                            <td>18/07/2023</td>
+                                            <td>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-edit"></i></button>
+                                                <button class="ant-btn ant-btn-default"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="columns">
+                            <div class="column">
+                                <div class="box">
+                                    <h2 class="title is-4">Distribuição por Categoria</h2>
+                                    <div class="chart-container">
+                                        <canvas id="categoryChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Categories Section -->
+                <div class="box">
+                    <h2 class="title is-4">Categorias</h2>
+                    <div class="categories-grid">
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(67, 97, 238, 0.1); color: #4361ee;">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="category-name">Moradia</div>
+                            <div class="card-subtitle">R$ 850,00</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div class="category-name">Alimentação</div>
+                            <div class="card-subtitle">R$ 375,30</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                <i class="fas fa-bus"></i>
+                            </div>
+                            <div class="category-name">Transporte</div>
+                            <div class="card-subtitle">R$ 280,00</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <div class="category-name">Compras</div>
+                            <div class="card-subtitle">R$ 420,50</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="category-name">Saúde</div>
+                            <div class="card-subtitle">R$ 150,00</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="category-name">Educação</div>
+                            <div class="card-subtitle">R$ 0,00</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(253, 126, 20, 0.1); color: #fd7e14;">
+                                <i class="fas fa-tv"></i>
+                            </div>
+                            <div class="category-name">Entretenimento</div>
+                            <div class="card-subtitle">R$ 125,90</div>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon" style="background: rgba(156, 163, 175, 0.1); color: #6b7280;">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <div class="category-name">Outros</div>
+                            <div class="card-subtitle">R$ 249,10</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Adicionar Gasto -->
+    <div class="ant-modal" id="expenseModal" style="display: none;">
+        <div class="ant-modal-content">
+            <div class="ant-modal-header">
+                <h3 class="title is-4">Adicionar Novo Gasto</h3>
+                <button class="ant-btn ant-btn-default close-modal">&times;</button>
+            </div>
+            <div class="ant-modal-body">
+                <div class="ant-form-item">
+                    <label class="label">Descrição</label>
+                    <div class="ant-form-item-control">
+                        <input type="text" class="ant-input" placeholder="Ex: Aluguel, Supermercado, etc.">
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">Tipo de Gasto</label>
+                    <div class="ant-radio-group">
+                        <label class="ant-radio-wrapper">
+                            <input type="radio" class="ant-radio-input" name="expenseType" value="avulso" checked>
+                            <span class="ant-radio"></span>
+                            <span>Avulso</span>
+                        </label>
+                        <label class="ant-radio-wrapper">
+                            <input type="radio" class="ant-radio-input" name="expenseType" value="recorrente">
+                            <span class="ant-radio"></span>
+                            <span>Recorrente</span>
+                        </label>
+                        <label class="ant-radio-wrapper">
+                            <input type="radio" class="ant-radio-input" name="expenseType" value="parcelado">
+                            <span class="ant-radio"></span>
+                            <span>Parcelado</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="columns">
+                    <div class="column">
+                        <div class="ant-form-item">
+                            <label class="label">Valor (R$)</label>
+                            <div class="ant-form-item-control">
+                                <input type="number" class="ant-input" placeholder="0,00" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="ant-form-item">
+                            <label class="label">Data</label>
+                            <div class="ant-form-item-control">
+                                <input type="date" class="ant-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">Categoria</label>
+                    <div class="ant-form-item-control">
+                        <select class="ant-input">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="moradia">Moradia</option>
+                            <option value="alimentacao">Alimentação</option>
+                            <option value="transporte">Transporte</option>
+                            <option value="saude">Saúde</option>
+                            <option value="educacao">Educação</option>
+                            <option value="entretenimento">Entretenimento</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">Observações (opcional)</label>
+                    <div class="ant-form-item-control">
+                        <textarea class="ant-input" rows="3" placeholder="Detalhes adicionais..."></textarea>
+                    </div>
+                </div>
+                
+                <div id="recurringFields" style="display: none;">
+                    <div class="ant-form-item">
+                        <label class="label">Frequência</label>
+                        <div class="ant-form-item-control">
+                            <select class="ant-input">
+                                <option value="mensal">Mensal</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="diaria">Diária</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="installmentFields" style="display: none;">
+                    <div class="ant-form-item">
+                        <label class="label">Número de Parcelas</label>
+                        <div class="ant-form-item-control">
+                            <input type="number" class="ant-input" value="1" min="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ant-modal-footer">
+                <button class="ant-btn ant-btn-default">Cancelar</button>
+                <button class="ant-btn ant-btn-primary">Salvar Gasto</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Adicionar Entrada -->
+    <div class="ant-modal" id="incomeModal" style="display: none;">
+        <div class="ant-modal-content">
+            <div class="ant-modal-header">
+                <h3 class="title is-4">Adicionar Entrada</h3>
+                <button class="ant-btn ant-btn-default close-modal">&times;</button>
+            </div>
+            <div class="ant-modal-body">
+                <div class="ant-form-item">
+                    <label class="label">Descrição</label>
+                    <div class="ant-form-item-control">
+                        <input type="text" class="ant-input" placeholder="Ex: Salário, Bônus, Freelance, etc.">
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">Tipo de Entrada</label>
+                    <div class="ant-radio-group">
+                        <label class="ant-radio-wrapper">
+                            <input type="radio" class="ant-radio-input" name="incomeType" value="salario" checked>
+                            <span class="ant-radio"></span>
+                            <span>Salário</span>
+                        </label>
+                        <label class="ant-radio-wrapper">
+                            <input type="radio" class="ant-radio-input" name="incomeType" value="extra">
+                            <span class="ant-radio"></span>
+                            <span>Renda Extra</span>
+                        </label>
+                        <label class="ant-radio-wrapper">
+                            <input type="radio" class="ant-radio-input" name="incomeType" value="investimento">
+                            <span class="ant-radio"></span>
+                            <span>Investimento</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="columns">
+                    <div class="column">
+                        <div class="ant-form-item">
+                            <label class="label">Valor (R$)</label>
+                            <div class="ant-form-item-control">
+                                <input type="number" class="ant-input" placeholder="0,00" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="ant-form-item">
+                            <label class="label">Data</label>
+                            <div class="ant-form-item-control">
+                                <input type="date" class="ant-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">Categoria</label>
+                    <div class="ant-form-item-control">
+                        <select class="ant-input">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="salario">Salário</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="investimento">Investimento</option>
+                            <option value="bonus">Bônus</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">Observações (opcional)</label>
+                    <div class="ant-form-item-control">
+                        <textarea class="ant-input" rows="3" placeholder="Detalhes adicionais..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="ant-form-item">
+                    <label class="label">
+                        <input type="checkbox">
+                        Esta é uma entrada recorrente (ex: salário mensal)
+                    </label>
+                </div>
+            </div>
+            <div class="ant-modal-footer">
+                <button class="ant-btn ant-btn-default">Cancelar</button>
+                <button class="ant-btn ant-btn-success">Salvar Entrada</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Modal functionality
+        const addExpenseBtn = document.getElementById('addExpenseBtn');
+        const addIncomeBtn = document.getElementById('addIncomeBtn');
+        const expenseModal = document.getElementById('expenseModal');
+        const incomeModal = document.getElementById('incomeModal');
+        const closeModal = document.querySelectorAll('.close-modal');
+        const cancelBtns = document.querySelectorAll('.ant-btn-default');
+        
+        addExpenseBtn.addEventListener('click', () => {
+            expenseModal.style.display = 'block';
+        });
+        
+        addIncomeBtn.addEventListener('click', () => {
+            incomeModal.style.display = 'block';
+        });
+        
+        closeModal.forEach(btn => {
+            btn.addEventListener('click', () => {
+                expenseModal.style.display = 'none';
+                incomeModal.style.display = 'none';
+            });
+        });
+        
+        cancelBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if(this.textContent === 'Cancelar') {
+                    expenseModal.style.display = 'none';
+                    incomeModal.style.display = 'none';
+                }
+            });
+        });
+        
+        // Expense type radio buttons functionality
+        const expenseTypeRadios = document.querySelectorAll('input[name="expenseType"]');
+        const recurringFields = document.getElementById('recurringFields');
+        const installmentFields = document.getElementById('installmentFields');
+        
+        expenseTypeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'recorrente') {
+                    recurringFields.style.display = 'block';
+                    installmentFields.style.display = 'none';
+                } else if (radio.value === 'parcelado') {
+                    recurringFields.style.display = 'none';
+                    installmentFields.style.display = 'block';
+                } else {
+                    recurringFields.style.display = 'none';
+                    installmentFields.style.display = 'none';
+                }
+            });
+        });
+        
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.tab');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+        
+        // Category item click functionality
+        const categoryItems = document.querySelectorAll('.category-item');
+        
+        categoryItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const categoryName = item.querySelector('.category-name').textContent;
+                alert(`Filtrando por categoria: ${categoryName}`);
+            });
+        });
+        
+        // Charts initialization
+        // Category Distribution Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Moradia', 'Alimentação', 'Transporte', 'Compras', 'Entretenimento', 'Outros'],
+                datasets: [{
+                    data: [35, 25, 15, 10, 10, 5],
+                    backgroundColor: [
+                        '#4361ee',
+                        '#ef4444',
+                        '#3b82f6',
+                        '#f59e0b',
+                        '#fd7e14',
+                        '#9ca3af'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.label}: R$ ${(context.parsed * 2450.80 / 100).toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+        
+        // Simulate balance calculation
+        function calculateBalance() {
+            const salary = 4500;
+            const expenses = 2450.80;
+            const balance = salary - expenses;
+            const balanceElement = document.querySelector('.balance-value');
+            
+            balanceElement.textContent = `R$ ${balance.toFixed(2)}`;
+            balanceElement.className = balance >= 0 ? 
+                'balance-value positive-balance' : 
+                'balance-value negative-balance';
+            
+            // Update progress bar
+            const daysPassed = 20; // 20 days passed in the month
+            const progress = (daysPassed / 30) * 100;
+            const progressFill = document.querySelector('.progress-fill');
+            progressFill.style.width = `${progress}%`;
+            
+            // Update projection
+            const dailyExpense = expenses / daysPassed;
+            const projectedExpense = dailyExpense * 30;
+            const projectedBalance = salary - projectedExpense;
+            
+            document.querySelector('.card-value.positive-balance').textContent = 
+                `R$ ${projectedBalance.toFixed(2)}`;
+        }
+        
+        // Initialize balance calculation
+        calculateBalance();
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === expenseModal) {
+                expenseModal.style.display = 'none';
+            }
+            if (e.target === incomeModal) {
+                incomeModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

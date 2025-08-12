@@ -1,89 +1,89 @@
-import { Injectable, computed, signal, inject } from '@angular/core';
-import { TransactionService } from './transaction.service';
-import {TransactionType, ExpenseType, Transaction} from '../models/transaction.model';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { FinancialApiService } from './financial-api.service';
+import { PaymentStatus } from '../models/transaction.model';
+
+export interface FinancialData {
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  currency: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class BalanceService {
-  private transactionService = inject(TransactionService);
-  private transactions = this.transactionService.transactions$;
+  private financialApiService = inject(FinancialApiService);
 
-  // Computed values com tipagem forte
-  monthlyIncome = computed(() => this.calculateMonthlyIncome());
-  monthlyExpenses = computed(() => this.calculateMonthlyExpenses());
-  monthlyBalance = computed(() => this.monthlyIncome() - this.monthlyExpenses());
-  recurringExpenses = computed(() => this.calculateRecurringExpenses());
-  installmentExpenses = computed(() => this.calculateInstallmentExpenses());
-  singleExpenses = computed(() => this.calculateSingleExpenses());
+  // Signal para dados financeiros vindos do backend
+  private backendFinancialData = signal<FinancialData>({
+    totalIncome: 0,
+    totalExpense: 0,
+    balance: 0,
+    currency: 'R$'
+  });
 
-  private calculateMonthlyIncome(): number {
-    const now = new Date();
-    return this.transactions().filter((t: Transaction) =>
-      t.type === TransactionType.INCOME &&
-      t.date.getMonth() === now.getMonth() &&
-      t.date.getFullYear() === now.getFullYear()
-    ).reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+  // Dados financeiros formatados para exibição (vindos do backend)
+  financialData = computed((): FinancialData => this.backendFinancialData());
+
+  constructor() {
+    // Carrega dados iniciais do backend sem status específico
+    this.loadFinancialData();
   }
 
-  private calculateMonthlyExpenses(): number {
-    const now = new Date();
-    return this.transactions().filter((t: Transaction) =>
-      t.type === TransactionType.EXPENSE &&
-      t.date.getMonth() === now.getMonth() &&
-      t.date.getFullYear() === now.getFullYear()
-    ).reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+  /**
+   * Carrega dados financeiros do backend
+   */
+  loadFinancialData(userId: number = 1, status?: PaymentStatus): void {
+    this.financialApiService.getCurrentMonthStats(userId, status).subscribe({
+      next: (data) => {
+        this.backendFinancialData.set(data);
+      },
+      error: (error) => {
+        console.error('Erro ao carregar dados financeiros:', error);
+        // Mantém dados padrão em caso de erro
+      }
+    });
   }
 
-  private calculateRecurringExpenses(): number {
-    const now = new Date();
-    return this.transactions().filter((t: Transaction) =>
-      t.type === TransactionType.EXPENSE &&
-      t.expenseType === ExpenseType.RECURRENT &&
-      t.date.getMonth() === now.getMonth() &&
-      t.date.getFullYear() === now.getFullYear()
-    ).reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+  /**
+   * Recarrega dados financeiros com parâmetros específicos
+   */
+  refreshFinancialData(
+    userId: number,
+    status?: PaymentStatus | 'ALL',
+    startDate?: string,
+    endDate?: string,
+    type?: string
+  ): void {
+    // Se status for 'ALL', não envia o parâmetro status para a API
+    const apiStatus = status === 'ALL' ? undefined : status as PaymentStatus;
+
+    this.financialApiService.getIncomeExpenseBalance({
+      userId,
+      status: apiStatus,
+      startDate,
+      endDate,
+      type
+    }).subscribe({
+      next: (data) => {
+        this.backendFinancialData.set(data);
+      },
+      error: (error) => {
+        console.error('Erro ao recarregar dados financeiros:', error);
+      }
+    });
   }
 
-  private calculateInstallmentExpenses(): number {
-    const now = new Date();
-    return this.transactions().filter((t: Transaction) =>
-      t.type === TransactionType.EXPENSE &&
-      t.expenseType === ExpenseType.INSTALLMENT &&
-      t.date.getMonth() === now.getMonth() &&
-      t.date.getFullYear() === now.getFullYear()
-    ).reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+  /**
+   * Formata valores monetários em Real Brasileiro
+   */
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   }
-
-  private calculateSingleExpenses(): number {
-    const now = new Date();
-    return this.transactions().filter((t: Transaction) =>
-      t.type === TransactionType.EXPENSE &&
-      (!t.expenseType || t.expenseType === ExpenseType.SINGLE) &&
-      t.date.getMonth() === now.getMonth() &&
-      t.date.getFullYear() === now.getFullYear()
-    ).reduce((sum: number, t: Transaction) => sum + t.amount, 0);
-  }
-
-  getSalaryDate(): Date | null {
-    const salary = this.transactions().find((t: Transaction) =>
-      t.type === TransactionType.INCOME &&
-      t.categoryId === 'salary'
-    );
-    return salary ? salary.date : null;
-  }
-
-  getProgressPercentage(): number {
-    const today = new Date();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    return Math.round((today.getDate() / daysInMonth) * 100);
-  }
-
-  getProjectedBalance(): number {
-    const today = new Date();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    const dailyExpense = this.monthlyExpenses() / today.getDate();
-    return this.monthlyIncome() - (dailyExpense * daysInMonth);
-  }
-
 }

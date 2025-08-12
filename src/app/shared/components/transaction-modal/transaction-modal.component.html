@@ -1,0 +1,194 @@
+<div class="modal-overlay" *ngIf="isVisible()" (click)="close()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ modalTitle }}</h2>
+      <button class="close-btn" (click)="close()">×</button>
+    </div>
+
+    <form class="modal-body" (ngSubmit)="onSubmit()">
+      <!-- Descrição -->
+      <div class="form-group">
+        <label for="description">Descrição *</label>
+        <input
+          type="text"
+          id="description"
+          [(ngModel)]="transactionForm.description"
+          name="description"
+          placeholder="Digite a descrição da transação"
+          required
+        />
+      </div>
+
+      <!-- Tipo de Transação (apenas para despesas) -->
+      <div class="form-group" *ngIf="transactionForm.type === 'EXPENSE'">
+        <label for="transactionType">Tipo de Transação</label>
+        <select
+          id="transactionType"
+          [(ngModel)]="selectedTransactionType"
+          name="transactionType"
+          (change)="onTransactionTypeChange()"
+        >
+          <option [value]="TransactionTypeLocal.SINGLE">Avulso</option>
+          <option [value]="TransactionTypeLocal.INSTALLMENT">Parcelado</option>
+          <option [value]="TransactionTypeLocal.RECURRENT">Recorrente</option>
+        </select>
+      </div>
+
+      <!-- Valor -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="amount">Valor *</label>
+          <input
+            type="number"
+            id="amount"
+            [(ngModel)]="transactionForm.amount"
+            name="amount"
+            step="0.01"
+            min="0"
+            placeholder="0,00"
+            required
+          />
+        </div>
+
+        <div class="form-group" *ngIf="shouldShowDownPayment">
+          <label for="downPayment">Entrada</label>
+          <input
+            type="number"
+            id="downPayment"
+            [(ngModel)]="transactionForm.downPayment"
+            name="downPayment"
+            step="0.01"
+            min="0"
+            placeholder="0,00"
+          />
+        </div>
+      </div>
+
+      <!-- Tipo de Operação -->
+      <div class="form-group">
+        <label for="operationType">Tipo de Operação</label>
+        <select
+          id="operationType"
+          [(ngModel)]="transactionForm.operationType"
+          name="operationType"
+        >
+          <option [value]="AccountOperationType.SALARY">Salário</option>
+          <option [value]="AccountOperationType.DEPOSIT">Depósito</option>
+          <option [value]="AccountOperationType.PAYMENT">Pagamento</option>
+          <option [value]="AccountOperationType.WITHDRAWAL">Saque</option>
+          <option [value]="AccountOperationType.TRANSFER_IN">Transferência Entrada</option>
+          <option [value]="AccountOperationType.TRANSFER_OUT">Transferência Saída</option>
+          <option [value]="AccountOperationType.REFUND">Reembolso</option>
+          <option [value]="AccountOperationType.OTHER">Outro</option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select
+          id="status"
+          [(ngModel)]="transactionForm.status"
+          name="status"
+        >
+          <option [value]="PaymentStatus.PENDING">Pendente</option>
+          <option [value]="PaymentStatus.PAID">Pago</option>
+          <option [value]="PaymentStatus.FAILED">Falhado</option>
+        </select>
+      </div>
+
+      <!-- Data de Vencimento -->
+      <div class="form-group">
+        <label for="dueDate">Data de Vencimento</label>
+        <input
+          type="date"
+          id="dueDate"
+          [(ngModel)]="transactionForm.dueDate"
+          name="dueDate"
+        />
+      </div>
+
+      <!-- Parcelamento (apenas para tipo INSTALLMENT) -->
+      <div *ngIf="shouldShowInstallments" class="form-group">
+        <label for="totalInstallments">Número de Parcelas</label>
+        <input
+          type="number"
+          id="totalInstallments"
+          [(ngModel)]="transactionForm.totalInstallments"
+          name="totalInstallments"
+          min="2"
+          max="60"
+        />
+      </div>
+
+      <!-- Campos de Parcelamento (mostrar apenas se INSTALLMENT) -->
+      <div *ngIf="shouldShowInstallments" class="installment-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="currentInstallment">Parcela Atual</label>
+            <input
+              type="number"
+              id="currentInstallment"
+              [(ngModel)]="transactionForm.currentInstallment"
+              name="currentInstallment"
+              min="1"
+              [max]="transactionForm.totalInstallments || 1"
+            />
+          </div>
+
+          <div class="form-group" *ngIf="shouldShowRecurrence">
+            <label for="recurrencePattern">Recorrência</label>
+            <select
+              id="recurrencePattern"
+              [(ngModel)]="transactionForm.recurrencePattern"
+              name="recurrencePattern"
+            >
+              <option [value]="RecurrencePattern.DAILY">Diária</option>
+              <option [value]="RecurrencePattern.WEEKLY">Semanal</option>
+              <option [value]="RecurrencePattern.MONTHLY">Mensal</option>
+              <option [value]="RecurrencePattern.YEARLY">Anual</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recorrência para tipo RECURRENT -->
+      <div *ngIf="selectedTransactionType === TransactionTypeLocal.RECURRENT" class="form-group">
+        <label for="recurrencePatternSingle">Recorrência</label>
+        <select
+          id="recurrencePatternSingle"
+          [(ngModel)]="transactionForm.recurrencePattern"
+          name="recurrencePatternSingle"
+        >
+          <option [value]="RecurrencePattern.DAILY">Diária</option>
+          <option [value]="RecurrencePattern.WEEKLY">Semanal</option>
+          <option [value]="RecurrencePattern.MONTHLY">Mensal</option>
+          <option [value]="RecurrencePattern.YEARLY">Anual</option>
+        </select>
+      </div>
+
+      <!-- Observações -->
+      <div class="form-group">
+        <label for="notes">Observações</label>
+        <textarea
+          id="notes"
+          [(ngModel)]="transactionForm.notes"
+          name="notes"
+          placeholder="Observações adicionais..."
+          rows="3"
+        ></textarea>
+      </div>
+
+      <!-- Botões -->
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="close()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="isLoading()">
+          <span *ngIf="isLoading()">Salvando...</span>
+          <span *ngIf="!isLoading()">Salvar Transação</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

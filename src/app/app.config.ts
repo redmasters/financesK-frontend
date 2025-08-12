@@ -1,22 +1,13 @@
-import {
-  ApplicationConfig,
-  provideBrowserGlobalErrorListeners,
-  provideZoneChangeDetection,
-  LOCALE_ID
-} from '@angular/core';
-import {registerLocaleData} from '@angular/common';
-import {provideRouter} from '@angular/router';
-import localePt from '@angular/common/locales/pt';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
-import {routes} from './app.routes';
-
-registerLocaleData(localePt, 'pt-BR')
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    {provide: LOCALE_ID, useValue: 'pt-BR'},
-    provideBrowserGlobalErrorListeners(),
-    provideZoneChangeDetection({eventCoalescing: true}),
-    provideRouter(routes)
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    provideHttpClient()
   ]
 };

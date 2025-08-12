@@ -1,0 +1,283 @@
+<div class="hybrid-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <i class="fas fa-wallet"></i>
+      <span>FinancesK</span>
+    </div>
+    <div class="nav-links">
+      <a href="#" class="nav-link active">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-link">
+        <i class="fas fa-chart-line"></i>
+        <span>Relatórios</span>
+      </a>
+      <a href="#" class="nav-link">
+        <i class="fas fa-tags"></i>
+        <span>Categorias</span>
+      </a>
+      <a href="#" class="nav-link">
+        <i class="fas fa-history"></i>
+        <span>Histórico</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">Controle Financeiro</h1>
+        <p class="page-subtitle">Gerencie suas finanças de forma inteligente</p>
+      </div>
+      <div class="header-right">
+        <button class="btn-action btn-income" (click)="openIncomeModal()">
+          <i class="fas fa-plus-circle"></i>
+          Nova Receita
+        </button>
+        <button class="btn-action btn-expense" (click)="openExpenseModal()">
+          <i class="fas fa-plus"></i>
+          Nova Despesa
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="dashboard-grid">
+      <!-- Saldo Principal (Card Grande) -->
+      <div class="balance-card-main">
+        <div class="balance-header">
+          <div class="balance-info">
+            <div class="balance-title">SALDO DO MÊS</div>
+            <div class="balance-value" [class.positive]="financialData.balance > 0" [class.negative]="financialData.balance < 0">
+              {{ formatCurrency(financialData.balance) }}
+            </div>
+            <div class="balance-subtitle">Atualizado em {{ getCurrentDate() }}</div>
+          </div>
+        </div>
+        <div class="progress-section">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getMonthProgress()"></div>
+          </div>
+          <div class="progress-text">
+            {{ getMonthProgress().toFixed(0) }}% do mês decorrido
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards Menores -->
+      <div class="info-card income-card">
+        <div class="card-icon bg-success-light">
+          <i class="fas fa-money-check"></i>
+        </div>
+        <div class="card-content">
+          <div class="card-title">ENTRADAS</div>
+          <div class="card-value">{{ formatCurrency(financialData.totalIncome) }}</div>
+          <div class="card-subtitle">Total recebido</div>
+        </div>
+      </div>
+
+      <div class="info-card expense-card">
+        <div class="card-icon bg-danger-light">
+          <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="card-content">
+          <div class="card-title">GASTOS TOTAIS</div>
+          <div class="card-value">{{ formatCurrency(financialData.totalExpense) }}</div>
+          <div class="card-subtitle">{{ getExpensePercentage() }}% das entradas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção de Filtros e Dados -->
+    <div class="content-section">
+      <div class="filters-panel">
+        <div class="panel-header">
+          <h3>Filtros Avançados</h3>
+        </div>
+
+        <div class="filters-grid">
+          <div class="filter-item">
+            <label>Status:</label>
+            <select [(ngModel)]="selectedStatus" (change)="updateFinancialData()" class="filter-select">
+              <option value="ALL">Todos</option>
+              <option [value]="PaymentStatus.PENDING">Pendente</option>
+              <option [value]="PaymentStatus.PAID">Pago</option>
+              <option [value]="PaymentStatus.FAILED">Falhado</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label>Tipo:</label>
+            <select [(ngModel)]="selectedTransactionType" (change)="updateFinancialData()" class="filter-select">
+              <option value="">Todos os tipos</option>
+              <option [value]="'INCOME'">Receitas</option>
+              <option [value]="'EXPENSE'">Despesas</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label>Data Inicial:</label>
+            <input type="date" [(ngModel)]="startDate" (change)="updateFinancialData()" class="filter-input">
+          </div>
+
+          <div class="filter-item">
+            <label>Data Final:</label>
+            <input type="date" [(ngModel)]="endDate" (change)="updateFinancialData()" class="filter-input">
+          </div>
+
+          <div class="filter-item">
+            <button class="btn-reset" (click)="resetToCurrentMonth()">
+              <i class="fas fa-refresh"></i>
+              Resetar
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumo dos Filtros -->
+        <div class="filter-summary">
+          <div class="summary-item">
+            <span class="summary-label">Status:</span>
+            <span class="summary-value">{{ getStatusLabel(selectedStatus) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Período:</span>
+            <span class="summary-value">{{ formatDateRange() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de Transações -->
+      <div class="transactions-section">
+        <div class="section-header">
+          <h3>Transações</h3>
+          <div class="section-controls">
+            <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="page-size-select">
+              <option value="10">10 por página</option>
+              <option value="20">20 por página</option>
+              <option value="50">50 por página</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoadingTransactions" class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          Carregando transações...
+        </div>
+
+        <!-- Tabela de Transações -->
+        <div *ngIf="!isLoadingTransactions && transactions.length > 0" class="transactions-table-container">
+          <table class="transactions-table">
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Vencimento</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let transaction of transactions"
+                  [class]="'transaction-row ' + (transaction.type === 'INCOME' ? 'income-row' : 'expense-row')">
+                <td class="description-cell">
+                  <div class="transaction-description">
+                    <span class="main-description">{{ transaction.description }}</span>
+                    <small *ngIf="transaction.notes" class="transaction-notes">{{ transaction.notes }}</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="category-badge">{{ transaction.categoryName }}</span>
+                </td>
+                <td>
+                  <span class="transaction-type-badge" [class]="getTransactionTypeBadgeClass(transaction)">
+                    {{ getTransactionTypeLabel(transaction) }}
+                  </span>
+                </td>
+                <td class="amount-cell">
+                  <span class="amount-value" [class]="transaction.type === 'INCOME' ? 'income-amount' : 'expense-amount'">
+                    {{ formatCurrency(transaction.amount) }}
+                  </span>
+                  <div *ngIf="transaction.installmentInfo" class="installment-info">
+                    {{ transaction.installmentInfo.currentInstallment }}/{{ transaction.installmentInfo.totalInstallments }}
+                  </div>
+                </td>
+                <td>
+                  <span class="status-badge" [class]="'status-' + transaction.status.toLowerCase()">
+                    {{ getStatusLabel(transaction.status) }}
+                  </span>
+                </td>
+                <td class="date-cell">
+                  {{ formatTransactionDate(transaction.dueDate) }}
+                </td>
+                <td class="actions-cell">
+                  <button class="action-btn edit-btn" (click)="editTransaction(transaction)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="action-btn delete-btn" (click)="deleteTransaction(transaction)" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Estado Vazio -->
+        <div *ngIf="!isLoadingTransactions && transactions.length === 0" class="empty-state">
+          <i class="fas fa-receipt fa-3x"></i>
+          <h4>Nenhuma transação encontrada</h4>
+          <p>Tente ajustar os filtros ou adicione uma nova transação.</p>
+        </div>
+
+        <!-- Paginação -->
+        <div *ngIf="!isLoadingTransactions && totalPages > 1" class="pagination-container">
+          <div class="pagination-info">
+            Mostrando {{ getDisplayRange() }} de {{ totalElements }} resultados
+          </div>
+          <div class="pagination-controls">
+            <button class="pagination-btn"
+                    [disabled]="currentPage === 0"
+                    (click)="goToPage(0)">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="pagination-btn"
+                    [disabled]="currentPage === 0"
+                    (click)="goToPage(currentPage - 1)">
+              <i class="fas fa-angle-left"></i>
+            </button>
+
+            <div class="page-numbers">
+              <button *ngFor="let page of getVisiblePages()"
+                      class="page-number-btn"
+                      [class.active]="page === currentPage"
+                      (click)="goToPage(page)">
+                {{ page + 1 }}
+              </button>
+            </div>
+
+            <button class="pagination-btn"
+                    [disabled]="currentPage === totalPages - 1"
+                    (click)="goToPage(currentPage + 1)">
+              <i class="fas fa-angle-right"></i>
+            </button>
+            <button class="pagination-btn"
+                    [disabled]="currentPage === totalPages - 1"
+                    (click)="goToPage(totalPages - 1)">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Transação -->
+    <app-transaction-modal #transactionModal (transactionCreated)="onTransactionCreated()"></app-transaction-modal>
+  </div>
+</div>
