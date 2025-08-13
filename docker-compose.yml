@@ -1,0 +1,181 @@
+# =============================================================================
+# Docker Compose para FinancesK Frontend
+# =============================================================================
+
+version: '3.8'
+
+# Redes compartilhadas
+networks:
+  microservices-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Volumes compartilhados
+volumes:
+  node_modules:
+  nginx_cache:
+
+services:
+  # ---------------------------------------------------------------------------
+  # Desenvolvimento - Angular com hot reload
+  # ---------------------------------------------------------------------------
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: finances-frontend-dev
+    ports:
+      - "4200:4200"
+    volumes:
+      # Bind mount do código fonte para hot reload
+      - .:/app
+      - node_modules:/app/node_modules
+      # Bind mount para evitar problemas de permissão
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+    networks:
+      - microservices-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # Produção - Nginx servindo arquivos estáticos
+  # ---------------------------------------------------------------------------
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: finances-frontend-prod
+    ports:
+      - "80:80"
+    volumes:
+      - nginx_cache:/var/cache/nginx
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+    networks:
+      - microservices-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # ---------------------------------------------------------------------------
+  # Backend - Simulação (substitua pela sua aplicação backend real)
+  # ---------------------------------------------------------------------------
+  backend:
+    image: nginx:alpine
+    container_name: finances-backend-mock
+    ports:
+      - "8080:80"
+    volumes:
+      - ./mock-backend.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      microservices-network:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Testes automatizados
+  # ---------------------------------------------------------------------------
+  frontend-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    container_name: finances-frontend-test
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      - CI=true
+    networks:
+      - microservices-network
+    profiles:
+      - testing
+
+  # ---------------------------------------------------------------------------
+  # Nginx Load Balancer (para múltiplas instâncias em produção)
+  # ---------------------------------------------------------------------------
+  load-balancer:
+    image: nginx:alpine
+    container_name: finances-load-balancer
+    ports:
+      - "443:443"
+      - "8443:80"
+    volumes:
+      - ./nginx-lb.conf:/etc/nginx/nginx.conf:ro
+      # Para SSL em produção (descomente quando tiver certificados)
+      # - ./certs:/etc/nginx/certs:ro
+    networks:
+      - microservices-network
+    depends_on:
+      - frontend-prod
+    restart: unless-stopped
+    profiles:
+      - production
+      - load-balancer
+
+  # ---------------------------------------------------------------------------
+  # Monitoramento - Prometheus (opcional)
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: finances-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - microservices-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Monitoramento - Grafana (opcional)
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: finances-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - microservices-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+# Volumes nomeados para dados persistentes
+volumes:
+  grafana_data:
