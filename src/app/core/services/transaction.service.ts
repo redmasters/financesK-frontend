@@ -63,7 +63,6 @@ export class TransactionService {
       sortField: params.sortField || 'DUE_DATE',
       sortDirection: params.sortDirection || 'DESC'
     };
-
     // Adiciona parâmetros opcionais apenas se definidos
     if (params.type) {
       (apiParams as any).type = params.type;
@@ -130,3 +129,4 @@ export class TransactionService {
     return this.transactionApiService.deleteTransaction(id);
   }
 }
+
