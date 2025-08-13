@@ -1,0 +1,117 @@
+<div class="modal-overlay" *ngIf="isVisible()" (click)="close()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ modalTitle }}</h2>
+      <button class="close-btn" (click)="close()">×</button>
+    </div>
+
+    <form class="modal-body" (ngSubmit)="onSubmit()">
+      <!-- Nome da Categoria -->
+      <div class="form-group">
+        <label for="categoryName">Nome da Categoria *</label>
+        <input
+          type="text"
+          id="categoryName"
+          [(ngModel)]="currentForm.name"
+          name="categoryName"
+          placeholder="Ex: Alimentação, Transporte..."
+          required
+        />
+      </div>
+
+      <!-- Categoria Pai -->
+      <div class="form-group">
+        <label for="parentCategory">Categoria Pai (opcional)</label>
+        <select
+          id="parentCategory"
+          [(ngModel)]="currentForm.parentId"
+          name="parentCategory"
+        >
+          <option [value]="null">Categoria raiz</option>
+          <option
+            *ngFor="let category of availableParentCategories"
+            [value]="category.id"
+          >
+            {{ category.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Seleção de Ícone -->
+      <div class="form-group">
+        <label>Ícone *</label>
+        <div class="icon-selector">
+          <div class="selected-icon">
+            <i [class]="currentForm.icon" [style.color]="currentForm.color"></i>
+            <span>{{ currentForm.icon || 'Nenhum ícone selecionado' }}</span>
+          </div>
+
+          <div class="icon-grid">
+            <button
+              type="button"
+              *ngFor="let icon of predefinedIcons"
+              class="icon-option"
+              [class.selected]="currentForm.icon === icon"
+              (click)="selectIcon(icon)"
+            >
+              <i [class]="icon"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seleção de Cor -->
+      <div class="form-group">
+        <label>Cor *</label>
+        <div class="color-selector">
+          <div class="selected-color">
+            <div class="color-preview" [style.background-color]="currentForm.color"></div>
+            <input
+              type="color"
+              [(ngModel)]="currentForm.color"
+              name="categoryColor"
+              class="color-input"
+            />
+          </div>
+
+          <div class="color-grid">
+            <button
+              type="button"
+              *ngFor="let color of predefinedColors"
+              class="color-option"
+              [style.background-color]="color"
+              [class.selected]="currentForm.color === color"
+              (click)="selectColor(color)"
+            ></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview da Categoria -->
+      <div class="form-group">
+        <label>Preview</label>
+        <div class="category-preview">
+          <div class="category-badge">
+            <i [class]="currentForm.icon" [style.color]="currentForm.color"></i>
+            <span>{{ currentForm.name || 'Nome da categoria' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botões -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="close()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isLoading() || !currentForm.name.trim() || !currentForm.icon.trim()"
+        >
+          <span *ngIf="isLoading()">Salvando...</span>
+          <span *ngIf="!isLoading()">{{ isEditMode() ? 'Atualizar' : 'Criar' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

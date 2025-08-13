@@ -2,10 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  Transaction,
   CreateTransactionRequest,
   CreateTransactionResponse,
-  TransactionSearchParams,
-  TransactionSearchResponse
+  TransactionSearchResponse,
+  UpdateTransactionRequest
 } from '../models/transaction.model';
 
 @Injectable({
@@ -13,60 +14,64 @@ import {
 })
 export class TransactionApiService {
   private http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api/v1';
+  private baseUrl = 'http://localhost:8080/api/v1/transactions';
 
   /**
    * Cria uma nova transação
    */
-  createTransaction(request: CreateTransactionRequest): Observable<CreateTransactionResponse> {
-    return this.http.post<CreateTransactionResponse>(
-      `${this.baseUrl}/transactions`,
-      request
-    );
+  createTransaction(transaction: CreateTransactionRequest): Observable<CreateTransactionResponse> {
+    return this.http.post<CreateTransactionResponse>(this.baseUrl, transaction);
   }
 
   /**
    * Busca transações com paginação e filtros
    */
-  searchTransactions(params: TransactionSearchParams): Observable<TransactionSearchResponse> {
-    let httpParams = new HttpParams()
-      .set('userId', params.userId.toString())
-      .set('startDate', params.startDate)
-      .set('endDate', params.endDate)
-      .set('page', (params.page || 0).toString())
-      .set('size', (params.size || 20).toString())
-      .set('sortField', params.sortField || 'DUE_DATE')
-      .set('sortDirection', params.sortDirection || 'DESC');
+  searchTransactions(params: {
+    userId: number;
+    startDate: string;
+    endDate: string;
+    type?: string;
+    status?: string;
+    categoryId?: number;
+    isRecurring?: boolean;
+    hasInstallments?: boolean;
+    description?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    page?: number;
+    size?: number;
+    sortField?: string;
+    sortDirection?: string;
+  }): Observable<TransactionSearchResponse> {
+    let httpParams = new HttpParams();
 
-    // Adiciona parâmetros opcionais apenas se foram fornecidos
-    if (params.type) {
-      httpParams = httpParams.set('type', params.type);
-    }
-    if (params.status) {
-      httpParams = httpParams.set('status', params.status);
-    }
-    if (params.categoryId) {
-      httpParams = httpParams.set('categoryId', params.categoryId.toString());
-    }
-    if (params.isRecurring !== undefined) {
-      httpParams = httpParams.set('isRecurring', params.isRecurring.toString());
-    }
-    if (params.hasInstallments !== undefined) {
-      httpParams = httpParams.set('hasInstallments', params.hasInstallments.toString());
-    }
-    if (params.description) {
-      httpParams = httpParams.set('description', params.description);
-    }
-    if (params.minAmount !== undefined) {
-      httpParams = httpParams.set('minAmount', params.minAmount.toString());
-    }
-    if (params.maxAmount !== undefined) {
-      httpParams = httpParams.set('maxAmount', params.maxAmount.toString());
-    }
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, value.toString());
+      }
+    });
 
-    return this.http.get<TransactionSearchResponse>(
-      `${this.baseUrl}/transactions/search`,
-      { params: httpParams }
-    );
+    return this.http.get<TransactionSearchResponse>(`${this.baseUrl}/search`, { params: httpParams });
+  }
+
+  /**
+   * Busca uma transação por ID
+   */
+  getTransactionById(id: number): Observable<Transaction> {
+    return this.http.get<Transaction>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Atualiza uma transação
+   */
+  updateTransaction(id: number, transaction: UpdateTransactionRequest): Observable<Transaction> {
+    return this.http.put<Transaction>(`${this.baseUrl}/${id}`, transaction);
+  }
+
+  /**
+   * Deleta uma transação
+   */
+  deleteTransaction(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }

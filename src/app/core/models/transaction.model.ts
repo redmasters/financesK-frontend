@@ -3,12 +3,6 @@ export enum TransactionType {
   EXPENSE = 'EXPENSE'
 }
 
-export enum ExpenseType {
-  SINGLE = 'single',
-  RECURRENT = 'recurrent',
-  INSTALLMENT = 'installment'
-}
-
 export enum PaymentStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
@@ -119,34 +113,54 @@ export interface TransactionSearchParams {
 }
 
 export interface Transaction {
-  id: string;
+  id: number;
   description: string;
   amount: number;
-  date: Date;
+  downPayment?: number;
   type: TransactionType;
-  categoryId: string;
-  expenseType?: ExpenseType;
-  recurrence?: string;
-  installments?: {
-    current: number;
-    total: number;
-  };
+  operationType: AccountOperationType;
+  status: PaymentStatus;
+  categoryId: number;
+  categoryName?: string;
+  dueDate: string;
+  createdAt?: string;
+  updatedAt?: string;
+  notes?: string;
+  recurrencePattern?: RecurrencePattern;
+  installmentInfo?: InstallmentInfo;
+  userId: number;
+  accountId: number;
+  accountName?: string;
 }
 
 export interface CreateTransactionRequest {
   description: string;
   amount: number;
   downPayment?: number;
-  type: string;
-  operationType: string;
-  status: string;
+  type: TransactionType;
+  operationType: AccountOperationType;
+  status: PaymentStatus;
   categoryId: number;
   dueDate: string;
   notes?: string;
   currentInstallment?: number;
-  recurrencePattern?: string;
+  recurrencePattern?: RecurrencePattern;
   totalInstallments?: number;
   userId: number;
+  accountId: number;
+}
+
+export interface UpdateTransactionRequest {
+  description: string;
+  amount: number;
+  downPayment?: number;
+  type: TransactionType;
+  operationType: AccountOperationType;
+  status: PaymentStatus;
+  categoryId: number;
+  dueDate: string;
+  notes?: string;
+  currentInstallment?: number;
   accountId: number;
 }
 

@@ -1,0 +1,130 @@
+<div class="modal-overlay" *ngIf="isVisible()" (click)="close()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Detalhes da Transação</h2>
+      <button class="close-btn" (click)="close()">×</button>
+    </div>
+
+    <div class="modal-body" *ngIf="transaction() as tx">
+      <!-- Título e Status -->
+      <div class="transaction-header">
+        <div class="transaction-title">
+          <h3>{{ tx.description }}</h3>
+          <div class="badges">
+            <span class="badge" [class]="getTypeBadgeClass(tx.type)">
+              {{ getTypeLabel(tx.type) }}
+            </span>
+            <span class="badge" [class]="getStatusBadgeClass(tx.status)">
+              {{ getStatusLabel(tx.status) }}
+            </span>
+            <span class="badge" [class]="getTransactionTypeBadgeClass()">
+              {{ getTransactionTypeLabel() }}
+            </span>
+          </div>
+        </div>
+        <div class="transaction-amount" [class]="tx.type === TransactionType.INCOME ? 'income' : 'expense'">
+          {{ formatCurrency(tx.amount) }}
+        </div>
+      </div>
+
+      <!-- Informações Básicas -->
+      <div class="detail-section">
+        <h4>Informações Gerais</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Categoria:</label>
+            <span>{{ getCategoryName() }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Data de Vencimento:</label>
+            <span>{{ formatDate(tx.dueDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Conta:</label>
+            <span>{{ tx.accountName || 'Não informado' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="tx.createdAt">
+            <label>Criado em:</label>
+            <span>{{ formatDate(tx.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Valor de Entrada (se houver) -->
+      <div class="detail-section" *ngIf="tx.downPayment && tx.downPayment > 0">
+        <h4>Valor de Entrada</h4>
+        <div class="down-payment-amount">
+          {{ formatCurrency(tx.downPayment) }}
+        </div>
+      </div>
+
+      <!-- Informações de Parcelamento -->
+      <div class="detail-section" *ngIf="tx.installmentInfo">
+        <h4>Parcelamento</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Parcela Atual:</label>
+            <span>{{ getInstallmentInfo() }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Valor da Parcela:</label>
+            <span>{{ formatCurrency(tx.installmentInfo.installmentValue / 100) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="tx.recurrencePattern">
+            <label>Frequência:</label>
+            <span>{{ getRecurrenceLabel() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informações de Recorrência (sem parcelamento) -->
+      <div class="detail-section" *ngIf="tx.recurrencePattern && !tx.installmentInfo">
+        <h4>Recorrência</h4>
+        <div class="detail-item">
+          <label>Frequência:</label>
+          <span>{{ getRecurrenceLabel() }}</span>
+        </div>
+      </div>
+
+      <!-- Observações -->
+      <div class="detail-section" *ngIf="tx.notes && tx.notes.trim()">
+        <h4>Observações</h4>
+        <div class="notes-content">
+          {{ tx.notes }}
+        </div>
+      </div>
+
+      <!-- Informações Técnicas -->
+      <div class="detail-section technical-info">
+        <h4>Informações Técnicas</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>ID:</label>
+            <span>{{ tx.id }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Tipo de Operação:</label>
+            <span>{{ tx.operationType }}</span>
+          </div>
+          <div class="detail-item" *ngIf="tx.updatedAt">
+            <label>Última Atualização:</label>
+            <span>{{ formatDate(tx.updatedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="close()">
+        Fechar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onEdit()">
+        <i class="fas fa-edit"></i> Editar
+      </button>
+      <button type="button" class="btn btn-danger" (click)="onDelete()">
+        <i class="fas fa-trash"></i> Excluir
+      </button>
+    </div>
+  </div>
+</div>

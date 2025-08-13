@@ -1,34 +1,51 @@
-import { Component, inject, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { BalanceService, FinancialData } from '../../core/services/balance.service';
-import { TransactionApiService } from '../../core/services/transaction-api.service';
+import {Component, inject, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {BalanceService, FinancialData} from '../../core/services/balance.service';
+import {TransactionService} from '../../core/services/transaction.service';
+import {TransactionApiService} from '../../core/services/transaction-api.service';
+import {CategoryService} from '../../core/services/category.service';
+import {NotificationService} from '../../core/services/notification.service';
+import {CurrencyService} from '../../core/services/currency.service';
+import {BrazilianDateInputDirective} from '../../shared/directives/brazilian-date-input.directive';
 import {
   PaymentStatus,
-  TransactionDetail,
+  Transaction,
   TransactionSearchParams,
   TransactionType,
   SortDirection,
   SortField
 } from '../../core/models/transaction.model';
-import { TransactionModalComponent } from '../../shared/components/transaction-modal/transaction-modal.component';
+import {TransactionModalComponent} from '../../shared/components/transaction-modal/transaction-modal.component';
+import {CategoryModalComponent} from '../../shared/components/category-modal/category-modal.component';
+import {
+  TransactionDetailModalComponent
+} from '../../shared/components/transaction-detail-modal/transaction-detail-modal.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, TransactionModalComponent],
+  imports: [CommonModule, FormsModule, TransactionModalComponent, CategoryModalComponent,
+    TransactionDetailModalComponent, BrazilianDateInputDirective],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
   private balanceService = inject(BalanceService);
+  private transactionService = inject(TransactionService);
   private transactionApiService = inject(TransactionApiService);
+  private categoryService = inject(CategoryService);
+  private notificationService = inject(NotificationService);
+  private currencyService = inject(CurrencyService);
 
-  // Referência ao modal
+  // Referência aos modais
   @ViewChild(TransactionModalComponent) transactionModal!: TransactionModalComponent;
+  @ViewChild(CategoryModalComponent) categoryModal!: CategoryModalComponent;
+  @ViewChild(TransactionDetailModalComponent) transactionDetailModal!: TransactionDetailModalComponent;
 
   // Enums para uso no template
   PaymentStatus = PaymentStatus;
+  TransactionType = TransactionType;
 
   // Filtros do usuário
   selectedStatus: PaymentStatus | 'ALL' = 'ALL';
@@ -37,32 +54,53 @@ export class HomeComponent {
   userId: number = 1;
 
   // Propriedades para lista de transações
-  transactions: TransactionDetail[] = [];
-  isLoadingTransactions = false;
   selectedTransactionType: TransactionType | '' = '';
 
   // Paginação
   currentPage = 0;
   pageSize = 20;
-  totalElements = 0;
-  totalPages = 0;
+
+  // Transação sendo editada
+  editingTransaction: Transaction | null = null;
 
   constructor() {
     // Inicializa as datas com o mês atual
     this.initializeCurrentMonthDates();
+
     // Carrega dados iniciais
     this.updateFinancialData();
-    this.loadTransactions();
+
+    // Carrega categorias para uso nos modais de transação
+    this.categoryService.getAllCategories().subscribe();
   }
 
-  // Usando dados do service em vez de hardcoded
+  // Getters para acessar os signals do serviço
   get financialData(): FinancialData {
     return this.balanceService.financialData();
   }
 
-  // Delegando formatação para o service
-  formatCurrency(value: number): string {
-    return this.balanceService.formatCurrency(value);
+  get transactions() {
+    return this.transactionService.transactions();
+  }
+
+  get isLoadingTransactions() {
+    return this.transactionService.loading();
+  }
+
+  get totalElements() {
+    return this.transactionService.totalElements();
+  }
+
+  get totalPages() {
+    return this.transactionService.totalPages();
+  }
+
+  get categories() {
+    return this.categoryService.categories();
+  }
+
+  get isLoadingCategories() {
+    return this.categoryService.loading();
   }
 
   /**
@@ -163,21 +201,125 @@ export class HomeComponent {
    * Abre modal para criar receita
    */
   openIncomeModal(): void {
-    this.transactionModal.open('INCOME');
+    this.transactionModal.open(TransactionType.INCOME);
   }
 
   /**
    * Abre modal para criar despesa
    */
   openExpenseModal(): void {
-    this.transactionModal.open('EXPENSE');
+    this.transactionModal.open(TransactionType.EXPENSE);
   }
 
   /**
-   * Retorna a data atual formatada em português
+   * Abre o modal para editar uma transação
+   */
+  editTransaction(transaction: Transaction): void {
+    this.editingTransaction = transaction;
+    this.transactionService.getTransactionById(transaction.id).subscribe({
+      next: (fullTransaction) => {
+        this.transactionModal.openForEdit(fullTransaction);
+      },
+      error: (error) => {
+        console.error('Erro ao carregar transação para edição:', error);
+        this.notificationService.error('Erro ao carregar transação para edição');
+      }
+    });
+  }
+
+  /**
+   * Deleta uma transação
+   */
+  deleteTransaction(transaction: Transaction): void {
+    if (confirm(`Tem certeza que deseja deletar a transação "${transaction.description}"?`)) {
+      this.transactionService.deleteTransaction(transaction.id).subscribe({
+        next: () => {
+          this.notificationService.success('Transação deletada com sucesso!');
+          this.updateFinancialData(); // Atualiza os saldos
+          this.loadTransactions(); // Recarrega a lista
+        },
+        error: (error) => {
+          console.error('Erro ao deletar transação:', error);
+          this.notificationService.error('Erro ao deletar transação');
+        }
+      });
+    }
+  }
+
+  /**
+   * Abre modal para criar categoria
+   */
+  openCategoryModal(): void {
+    this.categoryModal.open();
+  }
+
+  /**
+   * Callback quando categoria é criada/atualizada
+   */
+  onCategoryChanged(): void {
+    // Recarrega as categorias após mudança
+    this.categoryService.getAllCategories().subscribe();
+  }
+
+  /**
+   * Callback chamado quando uma transação é atualizada no modal
+   */
+  onTransactionUpdated(): void {
+    this.editingTransaction = null;
+    this.updateFinancialData(); // Atualiza os saldos
+    this.loadTransactions(); // Recarrega a lista
+  }
+
+  /**
+   * Formata valores monetários para exibição
+   */
+  formatCurrency(value: number): string {
+    // Os valores do backend já vêm em reais, apenas formata
+    return this.currencyService.formatBRL(value);
+  }
+
+  /**
+   * Formata datas para exibição
+   */
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+
+    try {
+      // Adiciona T00:00:00 para evitar problemas de fuso horário
+      const date = new Date(dateString + 'T00:00:00');
+
+      // Verifica se a data é válida
+      if (isNaN(date.getTime())) {
+        // Fallback para split manual
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+      }
+
+      // Usa toLocaleDateString para formatação brasileira
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      // Fallback para split manual em caso de erro
+      const [year, month, day] = dateString.split('-');
+      return `${day}/${month}/${year}`;
+    }
+  }
+
+  /**
+   * Retorna a data atual formatada
    */
   getCurrentDate(): string {
     return new Date().toLocaleDateString('pt-BR');
+  }
+
+  /**
+   * Método auxiliar para Math.abs no template
+   */
+  abs(value: number): number {
+    return Math.abs(value);
   }
 
   /**
@@ -207,8 +349,6 @@ export class HomeComponent {
    * Carrega a lista de transações com base nos filtros atuais
    */
   loadTransactions(): void {
-    this.isLoadingTransactions = true;
-
     const params: TransactionSearchParams = {
       userId: this.userId,
       startDate: this.startDate,
@@ -221,17 +361,12 @@ export class HomeComponent {
       sortDirection: SortDirection.DESC
     };
 
-    this.transactionApiService.searchTransactions(params).subscribe({
+    this.transactionService.searchTransactions(params).subscribe({
       next: (response) => {
-        this.transactions = response.content;
-        this.totalElements = response.page.totalElements;
-        this.totalPages = response.page.totalPages;
-        this.isLoadingTransactions = false;
+        // O serviço já atualiza os signals automaticamente
       },
       error: (error) => {
         console.error('Erro ao carregar transações:', error);
-        this.isLoadingTransactions = false;
-        this.transactions = [];
       }
     });
   }
@@ -242,15 +377,6 @@ export class HomeComponent {
   onTransactionCreated(): void {
     // Recarrega os dados financeiros e transações após criar transação
     this.updateFinancialData();
-    this.loadTransactions();
-  }
-
-  /**
-   * Callback quando o tipo de transação é alterado
-   */
-  onTransactionTypeChange(): void {
-    this.currentPage = 0;
-    this.loadTransactions();
   }
 
   /**
@@ -311,7 +437,7 @@ export class HomeComponent {
   /**
    * Retorna o label do tipo de transação
    */
-  getTransactionTypeLabel(transaction: TransactionDetail): string {
+  getTransactionTypeLabel(transaction: Transaction): string {
     if (transaction.installmentInfo) {
       return 'Parcelado';
     }
@@ -324,7 +450,7 @@ export class HomeComponent {
   /**
    * Retorna a classe CSS para o badge do tipo de transação
    */
-  getTransactionTypeBadgeClass(transaction: TransactionDetail): string {
+  getTransactionTypeBadgeClass(transaction: Transaction): string {
     if (transaction.installmentInfo) {
       return 'badge-installment';
     }
@@ -335,18 +461,32 @@ export class HomeComponent {
   }
 
   /**
-   * Edita uma transação (placeholder)
+   * Abre o modal de detalhes da transação
    */
-  editTransaction(transaction: TransactionDetail): void {
-    // TODO: Implementar edição de transação
-    console.log('Editar transação:', transaction);
+  viewTransactionDetails(transaction: Transaction): void {
+    // Busca os detalhes completos da transação
+    this.transactionService.getTransactionById(transaction.id).subscribe({
+      next: (fullTransaction) => {
+        this.transactionDetailModal.open(fullTransaction);
+      },
+      error: (error) => {
+        console.error('Erro ao carregar detalhes da transação:', error);
+        this.notificationService.error('Erro ao carregar detalhes da transação');
+      }
+    });
   }
 
   /**
-   * Exclui uma transação (placeholder)
+   * Callback quando edição é solicitada a partir do modal de detalhes
    */
-  deleteTransaction(transaction: TransactionDetail): void {
-    // TODO: Implementar exclusão de transação
-    console.log('Excluir transação:', transaction);
+  onEditFromDetails(transaction: Transaction): void {
+    this.editTransaction(transaction);
+  }
+
+  /**
+   * Callback quando exclusão é solicitada a partir do modal de detalhes
+   */
+  onDeleteFromDetails(transaction: Transaction): void {
+    this.deleteTransaction(transaction);
   }
 }

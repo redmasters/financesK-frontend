@@ -1,0 +1,159 @@
+<div class="categories-page">
+  <!-- Header da Página -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Gerenciar Categorias</h1>
+      <p class="page-subtitle">Organize suas categorias de receitas e despesas</p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="fas fa-plus"></i>
+        Nova Categoria
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros e Busca -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input
+        type="text"
+        placeholder="Buscar categorias..."
+        [(ngModel)]="searchTerm"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <select [(ngModel)]="selectedParentFilter" class="filter-select">
+        <option value="ALL">Todas as categorias</option>
+        <option value="ROOT">Apenas categorias raiz</option>
+        <option *ngFor="let category of rootCategories" [value]="category.id">
+          Subcategorias de {{ category.name }}
+        </option>
+      </select>
+
+      <button class="btn btn-secondary" (click)="clearFilters()">
+        <i class="fas fa-times"></i>
+        Limpar Filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Carregando categorias...</span>
+  </div>
+
+  <!-- Lista de Categorias -->
+  <div *ngIf="!isLoading" class="categories-container">
+    <!-- Estado Vazio -->
+    <div *ngIf="filteredCategories.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-tags"></i>
+      </div>
+      <h3>Nenhuma categoria encontrada</h3>
+      <p *ngIf="searchTerm || selectedParentFilter !== 'ALL'">
+        Tente ajustar os filtros de busca.
+      </p>
+      <p *ngIf="!searchTerm && selectedParentFilter === 'ALL'">
+        Comece criando sua primeira categoria.
+      </p>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <i class="fas fa-plus"></i>
+        Criar Primeira Categoria
+      </button>
+    </div>
+
+    <!-- Grid de Categorias -->
+    <div *ngIf="filteredCategories.length > 0" class="categories-grid">
+      <div *ngFor="let category of filteredCategories" class="category-card">
+        <!-- Header do Card -->
+        <div class="card-header">
+          <div class="category-icon" [style.background-color]="category.color + '20'">
+            <i [class]="category.icon" [style.color]="category.color"></i>
+          </div>
+          <div class="card-actions">
+            <button
+              class="action-btn edit-btn"
+              (click)="editCategory(category)"
+              title="Editar categoria"
+            >
+              <i class="fas fa-edit"></i>
+            </button>
+            <button
+              class="action-btn delete-btn"
+              (click)="deleteCategory(category)"
+              title="Deletar categoria"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Conteúdo do Card -->
+        <div class="card-content">
+          <h3 class="category-name">{{ category.name }}</h3>
+
+          <div class="category-info">
+            <div class="info-item">
+              <span class="info-label">Tipo:</span>
+              <span class="info-value">
+                {{ category.parentId ? 'Subcategoria' : 'Categoria Principal' }}
+              </span>
+            </div>
+
+            <div *ngIf="category.parentId" class="info-item">
+              <span class="info-label">Categoria Pai:</span>
+              <span class="info-value">{{ getParentCategoryName(category.parentId) }}</span>
+            </div>
+
+            <div *ngIf="hasSubcategories(category.id)" class="info-item">
+              <span class="info-label">Subcategorias:</span>
+              <span class="info-value">{{ countSubcategories(category.id) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer do Card -->
+        <div class="card-footer">
+          <button
+            *ngIf="!category.parentId"
+            class="btn btn-outline"
+            (click)="openCreateSubcategoryModal(category.id)"
+          >
+            <i class="fas fa-plus"></i>
+            Adicionar Subcategoria
+          </button>
+
+          <div *ngIf="hasSubcategories(category.id)" class="subcategories-preview">
+            <small>Subcategorias:</small>
+            <div class="subcategories-list">
+              <span
+                *ngFor="let sub of getSubcategories(category.id).slice(0, 3)"
+                class="subcategory-tag"
+              >
+                <i [class]="sub.icon" [style.color]="sub.color"></i>
+                {{ sub.name }}
+              </span>
+              <span
+                *ngIf="getSubcategories(category.id).length > 3"
+                class="subcategory-tag more"
+              >
+                +{{ getSubcategories(category.id).length - 3 }} mais
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Categoria -->
+  <app-category-modal
+    (categoryCreated)="onCategoryChanged()"
+    (categoryUpdated)="onCategoryChanged()"
+  ></app-category-modal>
+</div>

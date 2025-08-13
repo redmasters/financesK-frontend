@@ -1,6 +1,35 @@
-<div class="app-container">
-  <h1>FinancesK</h1>
-  <router-outlet></router-outlet>
-  <app-notification></app-notification>
+<div class="app-layout">
+  <!-- Sidebar Compartilhada -->
+  <div class="sidebar">
+    <div class="logo">
+      <i class="fas fa-wallet"></i>
+      <span>FinancesK</span>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/home" class="nav-link" routerLinkActive="active">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-link">
+        <i class="fas fa-chart-line"></i>
+        <span>Relatórios</span>
+      </a>
+      <a routerLink="/categories" class="nav-link" routerLinkActive="active">
+        <i class="fas fa-tags"></i>
+        <span>Categorias</span>
+      </a>
+      <a href="#" class="nav-link">
+        <i class="fas fa-history"></i>
+        <span>Histórico</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <div class="main-content">
+    <router-outlet></router-outlet>
+  </div>
 </div>
 
+<!-- Componente de Notificações -->
+<app-notification></app-notification>
