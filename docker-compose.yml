@@ -6,20 +6,18 @@ version: '3.8'
 
 # Redes compartilhadas
 networks:
-  microservices-network:
+  finances-network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.20.0.0/16
-
-# Volumes compartilhados
-volumes:
-  node_modules:
-  nginx_cache:
+  # Conecta à rede externa existente do backend
+  microservices-network:
+    external: true
 
 services:
   # ---------------------------------------------------------------------------
-  # Desenvolvimento - Angular com hot reload
+  # Desenvolvimento - Angular com hot reload (usando backend real)
   # ---------------------------------------------------------------------------
   frontend-dev:
     build:
@@ -39,10 +37,9 @@ services:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=1000
+      - API_URL=http://financesk-app:8080
     networks:
-      - microservices-network
-    depends_on:
-      - backend
+      - microservices-network  # Conecta à rede do backend real
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4200"]
@@ -52,7 +49,43 @@ services:
       start_period: 40s
 
   # ---------------------------------------------------------------------------
-  # Produção - Nginx servindo arquivos estáticos
+  # Desenvolvimento com Mock Backend - Angular com backend simulado
+  # ---------------------------------------------------------------------------
+  frontend-dev-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: finances-frontend-dev-mock
+    ports:
+      - "4201:4200"  # Porta diferente para não conflitar
+    volumes:
+      # Bind mount do código fonte para hot reload
+      - .:/app
+      - node_modules:/app/node_modules
+      # Bind mount para evitar problemas de permissão
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+      - API_URL=http://backend-mock:8080
+    networks:
+      - finances-network
+    depends_on:
+      - backend-mock
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    profiles:
+      - mock
+
+  # ---------------------------------------------------------------------------
+  # Produção - Nginx servindo arquivos estáticos (usando backend real)
   # ---------------------------------------------------------------------------
   frontend-prod:
     build:
@@ -65,117 +98,71 @@ services:
     volumes:
       - nginx_cache:/var/cache/nginx
     environment:
-      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
-      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+      - API_URL=http://financesk-app:8080
     networks:
-      - microservices-network
-    depends_on:
-      - backend
+      - microservices-network  # Conecta à rede do backend real
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
-      timeout: 3s
+      timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 30s
 
   # ---------------------------------------------------------------------------
-  # Backend - Simulação (substitua pela sua aplicação backend real)
+  # Produção com Mock Backend
   # ---------------------------------------------------------------------------
-  backend:
-    image: nginx:alpine
-    container_name: finances-backend-mock
-    ports:
-      - "8080:80"
-    volumes:
-      - ./mock-backend.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      microservices-network:
-        ipv4_address: 172.20.0.10
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-
-  # ---------------------------------------------------------------------------
-  # Testes automatizados
-  # ---------------------------------------------------------------------------
-  frontend-test:
+  frontend-prod-mock:
     build:
       context: .
       dockerfile: Dockerfile
-      target: testing
-    container_name: finances-frontend-test
+      target: production
+    container_name: finances-frontend-prod-mock
+    ports:
+      - "8080:80"  # Porta diferente para não conflitar
     volumes:
-      - .:/app
-      - node_modules:/app/node_modules
+      - nginx_cache:/var/cache/nginx
     environment:
-      - CI=true
+      - API_URL=http://backend-mock:8080
     networks:
-      - microservices-network
+      - finances-network
+    depends_on:
+      - backend-mock
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     profiles:
-      - testing
+      - mock
 
   # ---------------------------------------------------------------------------
-  # Nginx Load Balancer (para múltiplas instâncias em produção)
+  # Mock Backend - JSON Server simulando API
   # ---------------------------------------------------------------------------
-  load-balancer:
+  backend-mock:
     image: nginx:alpine
-    container_name: finances-load-balancer
+    container_name: finances-backend-mock
     ports:
-      - "443:443"
-      - "8443:80"
+      - "8081:8080"
     volumes:
-      - ./nginx-lb.conf:/etc/nginx/nginx.conf:ro
-      # Para SSL em produção (descomente quando tiver certificados)
-      # - ./certs:/etc/nginx/certs:ro
+      - ./mock-backend.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
-      - microservices-network
-    depends_on:
-      - frontend-prod
+      - finances-network
     restart: unless-stopped
     profiles:
-      - production
-      - load-balancer
+      - mock
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
-  # ---------------------------------------------------------------------------
-  # Monitoramento - Prometheus (opcional)
-  # ---------------------------------------------------------------------------
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: finances-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    networks:
-      - microservices-network
-    restart: unless-stopped
-    profiles:
-      - monitoring
-
-  # ---------------------------------------------------------------------------
-  # Monitoramento - Grafana (opcional)
-  # ---------------------------------------------------------------------------
-  grafana:
-    image: grafana/grafana:latest
-    container_name: finances-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - microservices-network
-    depends_on:
-      - prometheus
-    restart: unless-stopped
-    profiles:
-      - monitoring
-
-# Volumes nomeados para dados persistentes
+# Volumes nomeados (consolidados em uma única seção)
 volumes:
-  grafana_data:
+  node_modules:
+    driver: local
+  nginx_cache:
+    driver: local
