@@ -1,15 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { TransactionApiService } from './transaction-api.service';
 import {
   Transaction,
-  CreateTransactionRequest,
-  CreateTransactionResponse,
+  TransactionSearchParams,
   TransactionSearchResponse,
-  UpdateTransactionRequest,
-  TransactionSearchParams
+  UpdateTransactionRequest
 } from '../models/transaction.model';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -17,63 +14,99 @@ import { tap } from 'rxjs/operators';
 export class TransactionService {
   private transactionApiService = inject(TransactionApiService);
 
-  // Signal para lista de transações
-  private transactionsSignal = signal<Transaction[]>([]);
-  private totalElementsSignal = signal<number>(0);
-  private totalPagesSignal = signal<number>(0);
-  private currentPageSignal = signal<number>(0);
-  private loadingSignal = signal<boolean>(false);
+  // Signals para estado
+  private _transactions = signal<Transaction[]>([]);
+  private _loading = signal<boolean>(false);
+  private _totalElements = signal<number>(0);
+  private _totalPages = signal<number>(0);
+  private _currentPage = signal<number>(0);
+  private _pageSize = signal<number>(10);
 
-  // Getters para os signals
+  // Getters read-only para os signals
   get transactions() {
-    return this.transactionsSignal.asReadonly();
-  }
-
-  get totalElements() {
-    return this.totalElementsSignal.asReadonly();
-  }
-
-  get totalPages() {
-    return this.totalPagesSignal.asReadonly();
-  }
-
-  get currentPage() {
-    return this.currentPageSignal.asReadonly();
+    return this._transactions.asReadonly();
   }
 
   get loading() {
-    return this.loadingSignal.asReadonly();
+    return this._loading.asReadonly();
+  }
+
+  get totalElements() {
+    return this._totalElements.asReadonly();
+  }
+
+  get totalPages() {
+    return this._totalPages.asReadonly();
+  }
+
+  get currentPage() {
+    return this._currentPage.asReadonly();
+  }
+
+  get pageSize() {
+    return this._pageSize.asReadonly();
   }
 
   /**
-   * Cria uma nova transação
+   * Busca transações com filtros e paginação
    */
-  createTransaction(transaction: CreateTransactionRequest): Observable<CreateTransactionResponse> {
-    return this.transactionApiService.createTransaction(transaction);
-  }
+  searchTransactions(params: TransactionSearchParams): void {
+    this._loading.set(true);
 
-  /**
-   * Busca transações com paginação e filtros
-   */
-  searchTransactions(params: TransactionSearchParams): Observable<TransactionSearchResponse> {
-    this.loadingSignal.set(true);
+    // Mapeia os parâmetros para o formato esperado pela API
+    const apiParams = {
+      userId: params.userId,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      page: params.page || 0,
+      size: params.size || 10,
+      sortField: params.sortField || 'DUE_DATE',
+      sortDirection: params.sortDirection || 'DESC'
+    };
 
-    return this.transactionApiService.searchTransactions(params).pipe(
-      tap(response => {
-        this.transactionsSignal.set(response.content);
-        this.totalElementsSignal.set(response.page.totalElements);
-        this.totalPagesSignal.set(response.page.totalPages);
-        this.currentPageSignal.set(response.page.number);
-        this.loadingSignal.set(false);
-      })
-    );
-  }
+    // Adiciona parâmetros opcionais apenas se definidos
+    if (params.type) {
+      (apiParams as any).type = params.type;
+    }
+    if (params.status) {
+      (apiParams as any).status = params.status;
+    }
+    if (params.categoryId) {
+      (apiParams as any).categoryId = params.categoryId;
+    }
+    if (params.isRecurring !== undefined) {
+      (apiParams as any).isRecurring = params.isRecurring;
+    }
+    if (params.hasInstallments !== undefined) {
+      (apiParams as any).hasInstallments = params.hasInstallments;
+    }
+    if (params.description?.trim()) {
+      (apiParams as any).description = params.description.trim();
+    }
+    if (params.minAmount !== undefined) {
+      (apiParams as any).minAmount = params.minAmount;
+    }
+    if (params.maxAmount !== undefined) {
+      (apiParams as any).maxAmount = params.maxAmount;
+    }
 
-  /**
-   * Busca uma transação por ID
-   */
-  getTransactionById(id: number): Observable<Transaction> {
-    return this.transactionApiService.getTransactionById(id);
+    this.transactionApiService.searchTransactions(apiParams).subscribe({
+      next: (response: TransactionSearchResponse) => {
+        this._transactions.set(response.content);
+        this._totalElements.set(response.page.totalElements);
+        this._totalPages.set(response.page.totalPages);
+        this._currentPage.set(response.page.number);
+        this._pageSize.set(response.page.size);
+        this._loading.set(false);
+      },
+      error: (error) => {
+        console.error('Erro ao buscar transações:', error);
+        this._transactions.set([]);
+        this._totalElements.set(0);
+        this._totalPages.set(0);
+        this._loading.set(false);
+      }
+    });
   }
 
   /**
@@ -84,29 +117,16 @@ export class TransactionService {
   }
 
   /**
-   * Deleta uma transação
+   * Busca uma transação por ID
    */
-  deleteTransaction(id: number): Observable<void> {
-    return this.transactionApiService.deleteTransaction(id).pipe(
-      tap(() => {
-        // Remove a transação da lista local após deletar
-        const currentTransactions = this.transactionsSignal();
-        const updatedTransactions = currentTransactions.filter(t => t.id !== id);
-        this.transactionsSignal.set(updatedTransactions);
-
-        // Atualiza o total de elementos
-        this.totalElementsSignal.set(this.totalElementsSignal() - 1);
-      })
-    );
+  getTransactionById(id: number): Observable<Transaction> {
+    return this.transactionApiService.getTransactionById(id);
   }
 
   /**
-   * Limpa a lista de transações
+   * Deleta uma transação
    */
-  clearTransactions(): void {
-    this.transactionsSignal.set([]);
-    this.totalElementsSignal.set(0);
-    this.totalPagesSignal.set(0);
-    this.currentPageSignal.set(0);
+  deleteTransaction(id: number): Observable<void> {
+    return this.transactionApiService.deleteTransaction(id);
   }
 }

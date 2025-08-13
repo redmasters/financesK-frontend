@@ -1,6 +1,7 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { FinancialApiService } from './financial-api.service';
-import { PaymentStatus } from '../models/transaction.model';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { PaymentStatus, TransactionType } from '../models/transaction.model';
 
 export interface FinancialData {
   totalIncome: number;
@@ -13,81 +14,140 @@ export interface FinancialData {
   providedIn: 'root'
 })
 export class BalanceService {
-  private financialApiService = inject(FinancialApiService);
+  private readonly baseUrl = 'http://localhost:8080/api/v1/transactions';
 
-  // Signal para dados financeiros vindos do backend
-  private backendFinancialData = signal<FinancialData>({
+  // Signal para os dados financeiros
+  private _financialData = signal<FinancialData>({
     totalIncome: 0,
     totalExpense: 0,
     balance: 0,
     currency: 'R$'
   });
 
-  // Dados financeiros formatados para exibição (vindos do backend)
-  financialData = computed((): FinancialData => this.backendFinancialData());
+  // Signal para estado de carregamento
+  private _loading = signal<boolean>(false);
 
-  constructor() {
-    // Carrega dados iniciais do backend sem status específico
-    this.loadFinancialData();
+  constructor(private http: HttpClient) {}
+
+  // Getters para acessar os signals
+  get financialData() {
+    return this._financialData.asReadonly();
+  }
+
+  get loading() {
+    return this._loading.asReadonly();
   }
 
   /**
-   * Carrega dados financeiros do backend
-   */
-  loadFinancialData(userId: number = 1, status?: PaymentStatus): void {
-    this.financialApiService.getCurrentMonthStats(userId, status).subscribe({
-      next: (data) => {
-        this.backendFinancialData.set(data);
-      },
-      error: (error) => {
-        console.error('Erro ao carregar dados financeiros:', error);
-        // Mantém dados padrão em caso de erro
-      }
-    });
-  }
-
-  /**
-   * Recarrega dados financeiros com parâmetros específicos
+   * Busca dados financeiros com filtros avançados
    */
   refreshFinancialData(
     userId: number,
-    status?: PaymentStatus | 'ALL',
-    categoryId?: number | null,
+    status?: PaymentStatus,
+    categoryId?: number,
+    isRecurring?: boolean,
+    hasInstallments?: boolean,
+    description?: string,
+    minAmount?: number,
+    maxAmount?: number,
     startDate?: string,
     endDate?: string,
-    type?: string
+    type?: TransactionType
   ): void {
-    // Se status for 'ALL', não envia o parâmetro status para a API
-    const apiStatus = status === 'ALL' ? undefined : status as PaymentStatus;
-    // Se categoryId for 'ALL', não envia o parâmetro categoryId para a API
-    const apiCategoryId = categoryId === null ? undefined : categoryId;
+    this._loading.set(true);
 
-    this.financialApiService.getIncomeExpenseBalance({
+    this.getIncomeExpenseBalance(
       userId,
-      status: apiStatus,
-      categoryId: apiCategoryId,
+      status,
+      categoryId,
+      isRecurring,
+      hasInstallments,
+      description,
+      minAmount,
+      maxAmount,
       startDate,
       endDate,
       type
-    }).subscribe({
+    ).subscribe({
       next: (data) => {
-        this.backendFinancialData.set(data);
+        // Os valores já vêm em reais do backend, não precisam ser convertidos
+        this._financialData.set(data);
+        this._loading.set(false);
       },
       error: (error) => {
-        console.error('Erro ao recarregar dados financeiros:', error);
+        console.error('Erro ao carregar dados financeiros:', error);
+        this._loading.set(false);
+        // Em caso de erro, mantém os dados atuais ou valores padrão
+        this._financialData.set({
+          totalIncome: 0,
+          totalExpense: 0,
+          balance: 0,
+          currency: 'R$'
+        });
       }
     });
   }
 
   /**
-   * Formata valores monetários em Real Brasileiro
+   * Chama o endpoint de saldo com filtros avançados
    */
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
+  private getIncomeExpenseBalance(
+    userId: number,
+    status?: PaymentStatus,
+    categoryId?: number,
+    isRecurring?: boolean,
+    hasInstallments?: boolean,
+    description?: string,
+    minAmount?: number,
+    maxAmount?: number,
+    startDate?: string,
+    endDate?: string,
+    type?: TransactionType
+  ): Observable<FinancialData> {
+    let params = new HttpParams()
+      .set('userId', userId.toString());
+
+    // Adiciona parâmetros obrigatórios de data se fornecidos
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+
+    // Adiciona parâmetros opcionais apenas se definidos
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (type) {
+      params = params.set('type', type);
+    }
+    if (categoryId !== undefined) {
+      params = params.set('categoryId', categoryId.toString());
+    }
+    if (isRecurring !== undefined) {
+      params = params.set('isRecurring', isRecurring.toString());
+    }
+    if (hasInstallments !== undefined) {
+      params = params.set('hasInstallments', hasInstallments.toString());
+    }
+    if (description && description.trim()) {
+      params = params.set('description', description.trim());
+    }
+    if (minAmount !== undefined) {
+      params = params.set('minAmount', minAmount.toString());
+    }
+    if (maxAmount !== undefined) {
+      params = params.set('maxAmount', maxAmount.toString());
+    }
+
+    return this.http.get<FinancialData>(`${this.baseUrl}/stats/income-expense-balance`, { params });
+  }
+
+  /**
+   * Atualiza os dados financeiros de forma simples (compatibilidade)
+   */
+  updateFinancialData(userId: number, startDate: string, endDate: string, status?: PaymentStatus): void {
+    this.refreshFinancialData(userId, status, undefined, undefined, undefined, undefined, undefined, undefined, startDate, endDate);
   }
 }

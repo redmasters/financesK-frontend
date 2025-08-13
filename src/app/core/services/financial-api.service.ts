@@ -8,6 +8,11 @@ export interface FinancialStatsParams {
   userId: number;
   status?: PaymentStatus;
   categoryId?: number | null;
+  isRecurring?: boolean;
+  hasInstallments?: boolean;
+  description?: string;
+  minAmount?: number;
+  maxAmount?: number;
   startDate?: string;
   endDate?: string;
   type?: string;
@@ -29,6 +34,30 @@ export class FinancialApiService {
 
     if (params.status) {
       httpParams = httpParams.set('status', params.status);
+    }
+
+    if (params.categoryId) {
+      httpParams = httpParams.set('categoryId', params.categoryId.toString());
+    }
+
+    if (params.isRecurring !== undefined) {
+      httpParams = httpParams.set('isRecurring', params.isRecurring.toString());
+    }
+
+    if (params.hasInstallments !== undefined) {
+      httpParams = httpParams.set('hasInstallments', params.hasInstallments.toString());
+    }
+
+    if (params.description) {
+      httpParams = httpParams.set('description', params.description);
+    }
+
+    if (params.minAmount !== undefined) {
+      httpParams = httpParams.set('minAmount', params.minAmount.toString());
+    }
+
+    if (params.maxAmount !== undefined) {
+      httpParams = httpParams.set('maxAmount', params.maxAmount.toString());
     }
 
     if (params.startDate) {
