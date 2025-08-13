@@ -72,7 +72,6 @@ export class NotificationService {
   showError(message: string, duration?: number): void {
     this.error(message, duration);
   }
-
   showInfo(message: string, duration?: number): void {
     this.info(message, duration);
   }

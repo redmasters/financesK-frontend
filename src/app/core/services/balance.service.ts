@@ -52,16 +52,20 @@ export class BalanceService {
   refreshFinancialData(
     userId: number,
     status?: PaymentStatus | 'ALL',
+    categoryId?: number | null,
     startDate?: string,
     endDate?: string,
     type?: string
   ): void {
     // Se status for 'ALL', não envia o parâmetro status para a API
     const apiStatus = status === 'ALL' ? undefined : status as PaymentStatus;
+    // Se categoryId for 'ALL', não envia o parâmetro categoryId para a API
+    const apiCategoryId = categoryId === null ? undefined : categoryId;
 
     this.financialApiService.getIncomeExpenseBalance({
       userId,
       status: apiStatus,
+      categoryId: apiCategoryId,
       startDate,
       endDate,
       type

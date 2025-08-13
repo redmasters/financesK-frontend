@@ -55,10 +55,11 @@ export class HomeComponent {
 
   // Propriedades para lista de transações
   selectedTransactionType: TransactionType | '' = '';
+  selectedCategoryId: number | undefined = undefined;
 
   // Paginação
   currentPage = 0;
-  pageSize = 20;
+  pageSize = 10;
 
   // Transação sendo editada
   editingTransaction: Transaction | null = null;
@@ -122,6 +123,7 @@ export class HomeComponent {
     this.balanceService.refreshFinancialData(
       this.userId,
       this.selectedStatus,
+      this.selectedCategoryId,
       this.startDate,
       this.endDate,
       this.selectedTransactionType || undefined
@@ -135,7 +137,8 @@ export class HomeComponent {
    */
   resetToCurrentMonth(): void {
     this.selectedStatus = 'ALL';
-    this.selectedTransactionType = ''; // Também reseta o filtro de tipo de transação
+    this.selectedTransactionType = '';
+    this.selectedCategoryId = undefined; // Reseta também o filtro de categoria
     this.initializeCurrentMonthDates();
     this.currentPage = 0; // Reseta a página
     this.updateFinancialData(); // Isso já vai chamar loadTransactions()
@@ -144,15 +147,17 @@ export class HomeComponent {
   /**
    * Retorna o label traduzido do status
    */
-  getStatusLabel(status: PaymentStatus | 'ALL'): string {
+  getStatusLabel(status: PaymentStatus | 'ALL' | string): string {
     if (status === 'ALL') return 'Todos';
 
-    const statusLabels = {
-      [PaymentStatus.PENDING]: 'Pendente',
-      [PaymentStatus.PAID]: 'Pago',
-      [PaymentStatus.FAILED]: 'Falhado'
+    const statusLabels: { [key: string]: string } = {
+      'PENDING': 'Pendente',
+      'PAID': 'Pago',
+      'FAILED': 'Falhado',
+      'ALL': 'Todos'
     };
-    return statusLabels[status];
+
+    return statusLabels[status as string] || status;
   }
 
   /**
@@ -308,83 +313,111 @@ export class HomeComponent {
     }
   }
 
+  // ========== MÉTODOS PARA O TEMPLATE ==========
+
   /**
-   * Retorna a data atual formatada
+   * Expõe o Math para uso no template
+   */
+  Math = Math;
+
+  /**
+   * Abre o modal de detalhes da transação
+   */
+  viewTransactionDetails(transaction: Transaction): void {
+    this.transactionDetailModal.open(transaction);
+  }
+
+  /**
+   * Retorna a data atual formatada em português brasileiro
    */
   getCurrentDate(): string {
     return new Date().toLocaleDateString('pt-BR');
   }
 
   /**
-   * Método auxiliar para Math.abs no template
-   */
-  abs(value: number): number {
-    return Math.abs(value);
-  }
-
-  /**
-   * Calcula o progresso do mês atual (porcentagem de dias decorridos)
+   * Retorna o progresso do mês atual (0-100%)
    */
   getMonthProgress(): number {
     const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     const totalDays = endOfMonth.getDate();
     const currentDay = now.getDate();
 
-    return (currentDay / totalDays) * 100;
+    return Math.min((currentDay / totalDays) * 100, 100);
   }
 
   /**
-   * Calcula a porcentagem de gastos em relação às entradas
+   * Retorna a porcentagem de gastos em relação às entradas
    */
   getExpensePercentage(): number {
-    if (this.financialData.totalIncome <= 0) return 0;
+    if (this.financialData.totalIncome === 0) return 0;
     return Math.round((this.financialData.totalExpense / this.financialData.totalIncome) * 100);
   }
 
-  // ============= MÉTODOS PARA LISTA DE TRANSAÇÕES =============
+  /**
+   * Manipula a edição de transação vinda do modal de detalhes
+   */
+  onEditFromDetails(transaction: Transaction): void {
+    this.transactionModal.openForEdit(transaction);
+  }
 
   /**
-   * Carrega a lista de transações com base nos filtros atuais
+   * Manipula a exclusão de transação vinda do modal de detalhes
+   */
+  onDeleteFromDetails(transaction: Transaction): void {
+    if (confirm(`Tem certeza que deseja deletar a transação "${transaction.description}"?`)) {
+      this.transactionService.deleteTransaction(transaction.id).subscribe({
+        next: () => {
+          this.notificationService.success('Transação deletada com sucesso!');
+          this.updateFinancialData(); // Atualiza os saldos
+          this.loadTransactions(); // Recarrega a lista
+        },
+        error: (error) => {
+          console.error('Erro ao deletar transação:', error);
+          this.notificationService.error('Erro ao deletar transação');
+        }
+      });
+    }
+  }
+
+  // ========== MÉTODOS PARA LISTA DE TRANSAÇÕES ==========
+
+  /**
+   * Carrega a lista de transações com base nos filtros e paginação
    */
   loadTransactions(): void {
     const params: TransactionSearchParams = {
       userId: this.userId,
       startDate: this.startDate,
       endDate: this.endDate,
-      status: this.selectedStatus === 'ALL' ? undefined : this.selectedStatus,
-      type: this.selectedTransactionType || undefined,
       page: this.currentPage,
       size: this.pageSize,
       sortField: SortField.DUE_DATE,
       sortDirection: SortDirection.DESC
     };
 
+    // Adiciona filtros opcionais apenas se selecionados
+    if (this.selectedTransactionType) {
+      params.type = this.selectedTransactionType;
+    }
+
+    if (this.selectedStatus && this.selectedStatus !== 'ALL') {
+      params.status = this.selectedStatus;
+    }
+
+    // Adiciona filtro de categoria se selecionada
+    if (this.selectedCategoryId) {
+      params.categoryId = this.selectedCategoryId;
+    }
+
     this.transactionService.searchTransactions(params).subscribe({
-      next: (response) => {
-        // O serviço já atualiza os signals automaticamente
-      },
       error: (error) => {
         console.error('Erro ao carregar transações:', error);
+        this.notificationService.error('Erro ao carregar transações');
       }
     });
-  }
-
-  /**
-   * Callback quando transação é criada com sucesso
-   */
-  onTransactionCreated(): void {
-    // Recarrega os dados financeiros e transações após criar transação
-    this.updateFinancialData();
-  }
-
-  /**
-   * Callback quando o tamanho da página é alterado
-   */
-  onPageSizeChange(): void {
-    this.currentPage = 0;
-    this.loadTransactions();
   }
 
   /**
@@ -398,40 +431,39 @@ export class HomeComponent {
   }
 
   /**
-   * Retorna as páginas visíveis na paginação
+   * Manipula mudança no tamanho da página
+   */
+  onPageSizeChange(): void {
+    this.currentPage = 0; // Reseta para primeira página
+    this.loadTransactions();
+  }
+
+  /**
+   * Retorna as páginas visíveis para paginação
    */
   getVisiblePages(): number[] {
-    const maxVisible = 5;
-    const half = Math.floor(maxVisible / 2);
-    let start = Math.max(0, this.currentPage - half);
-    let end = Math.min(this.totalPages - 1, start + maxVisible - 1);
-
-    if (end - start < maxVisible - 1) {
-      start = Math.max(0, end - maxVisible + 1);
-    }
+    const totalPages = this.totalPages;
+    const currentPage = this.currentPage;
+    const delta = 2; // Número de páginas para mostrar de cada lado
 
     const pages: number[] = [];
+    const start = Math.max(0, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
+
     return pages;
   }
 
   /**
-   * Retorna o range de exibição atual (ex: "1-20 de 100")
+   * Retorna o range de itens sendo exibidos
    */
   getDisplayRange(): string {
     const start = this.currentPage * this.pageSize + 1;
     const end = Math.min((this.currentPage + 1) * this.pageSize, this.totalElements);
     return `${start}-${end}`;
-  }
-
-  /**
-   * Formata data de transação para exibição
-   */
-  formatTransactionDate(dateString: string): string {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('pt-BR');
   }
 
   /**
@@ -461,32 +493,10 @@ export class HomeComponent {
   }
 
   /**
-   * Abre o modal de detalhes da transação
+   * Callback chamado quando uma transação é criada no modal
    */
-  viewTransactionDetails(transaction: Transaction): void {
-    // Busca os detalhes completos da transação
-    this.transactionService.getTransactionById(transaction.id).subscribe({
-      next: (fullTransaction) => {
-        this.transactionDetailModal.open(fullTransaction);
-      },
-      error: (error) => {
-        console.error('Erro ao carregar detalhes da transação:', error);
-        this.notificationService.error('Erro ao carregar detalhes da transação');
-      }
-    });
-  }
-
-  /**
-   * Callback quando edição é solicitada a partir do modal de detalhes
-   */
-  onEditFromDetails(transaction: Transaction): void {
-    this.editTransaction(transaction);
-  }
-
-  /**
-   * Callback quando exclusão é solicitada a partir do modal de detalhes
-   */
-  onDeleteFromDetails(transaction: Transaction): void {
-    this.deleteTransaction(transaction);
+  onTransactionCreated(): void {
+    this.updateFinancialData(); // Atualiza os saldos
+    this.loadTransactions(); // Recarrega a lista
   }
 }

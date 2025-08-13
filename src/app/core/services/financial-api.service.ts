@@ -7,6 +7,7 @@ import { PaymentStatus } from '../models/transaction.model';
 export interface FinancialStatsParams {
   userId: number;
   status?: PaymentStatus;
+  categoryId?: number | null;
   startDate?: string;
   endDate?: string;
   type?: string;
