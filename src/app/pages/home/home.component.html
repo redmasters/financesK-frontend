@@ -25,8 +25,9 @@
       <div class="balance-header">
         <div class="balance-info">
           <div class="balance-title">SALDO DO MÊS</div>
-          <div class="balance-value" [class.positive]="financialData.balance > 0" [class.negative]="financialData.balance < 0">
-            {{ formatCurrency(financialData.balance) }}
+          <div class="balance-value" [class.positive]="financialData.balance > 0"
+               [class.negative]="financialData.balance < 0">
+            {{ financialData.balanceFormatted }}
           </div>
           <div class="balance-subtitle">Atualizado em {{ getCurrentDate() }}</div>
         </div>
@@ -48,7 +49,7 @@
       </div>
       <div class="card-content">
         <div class="card-title">ENTRADAS</div>
-        <div class="card-value">{{ formatCurrency(financialData.totalIncome) }}</div>
+        <div class="card-value">{{ financialData.totalIncomeFormatted }}</div>
         <div class="card-subtitle">Total recebido</div>
       </div>
     </div>
@@ -59,7 +60,7 @@
       </div>
       <div class="card-content">
         <div class="card-title">GASTOS TOTAIS</div>
-        <div class="card-value">{{ formatCurrency(financialData.totalExpense) }}</div>
+        <div class="card-value">{{ financialData.totalExpenseFormatted }}</div>
         <div class="card-subtitle">{{ getExpensePercentage() }}% das entradas</div>
       </div>
     </div>
@@ -106,12 +107,14 @@
         <!-- Segunda linha - Filtros de data -->
         <div class="filter-item">
           <label><i class="fas fa-calendar-alt"></i> Data Inicial:</label>
-          <input appBrazilianDate [(ngModel)]="startDate" (change)="updateFinancialData()" class="filter-input" placeholder="dd/mm/aaaa">
+          <input appBrazilianDate [(ngModel)]="startDate" (change)="updateFinancialData()" class="filter-input"
+                 placeholder="dd/mm/aaaa">
         </div>
 
         <div class="filter-item">
           <label><i class="fas fa-calendar-check"></i> Data Final:</label>
-          <input appBrazilianDate [(ngModel)]="endDate" (change)="updateFinancialData()" class="filter-input" placeholder="dd/mm/aaaa">
+          <input appBrazilianDate [(ngModel)]="endDate" (change)="updateFinancialData()" class="filter-input"
+                 placeholder="dd/mm/aaaa">
         </div>
 
         <!-- Terceira linha - Filtros avançados -->
@@ -206,63 +209,63 @@
       <div *ngIf="!isLoadingTransactions && transactions.length > 0" class="transactions-table-container">
         <table class="transactions-table">
           <thead>
-            <tr>
-              <th><i class="fas fa-align-left"></i> Descrição</th>
-              <th><i class="fas fa-tags"></i> Categoria</th>
-              <th><i class="fas fa-coins"></i> Valor</th>
-              <th><i class="fas fa-info"></i> Tipo</th>
-              <th><i class="fas fa-calendar"></i> Vencimento</th>
-              <th><i class="fas fa-check-circle"></i> Status</th>
-            </tr>
+          <tr>
+            <th><i class="fas fa-align-left"></i> Descrição</th>
+            <th><i class="fas fa-tags"></i> Categoria</th>
+            <th><i class="fas fa-coins"></i> Valor</th>
+            <th><i class="fas fa-info"></i> Tipo</th>
+            <th><i class="fas fa-calendar"></i> Vencimento</th>
+            <th><i class="fas fa-check-circle"></i> Status</th>
+          </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let transaction of transactions"
-                [class]="'transaction-row ' + (transaction.type === TransactionType.INCOME ? 'income-row' : 'expense-row')">
+          <tr *ngFor="let transaction of transactions"
+              [class]="'transaction-row ' + (transaction.type === TransactionType.INCOME ? 'income-row' : 'expense-row')">
 
-              <td class="description-cell">
-                <div class="transaction-description">
+            <td class="description-cell">
+              <div class="transaction-description">
                   <span class="main-description clickable" (click)="viewTransactionDetails(transaction)">
                     {{ transaction.description }}
                   </span>
-                  <span *ngIf="transaction.notes" class="transaction-notes">
+                <span *ngIf="transaction.notes" class="transaction-notes">
                     {{ transaction.notes }}
                   </span>
-                </div>
-              </td>
+              </div>
+            </td>
 
-              <td class="category-cell">
-                <span class="category-name">{{ transaction.categoryName || 'Sem categoria' }}</span>
-              </td>
+            <td class="category-cell">
+              <span class="category-name">{{ transaction.categoryName || 'Sem categoria' }}</span>
+            </td>
 
-              <td class="amount-cell">
-                <div class="amount-value"
-                     [class.income-amount]="transaction.type === TransactionType.INCOME && transaction.status === 'PAID'"
-                     [class.expense-amount]="transaction.type === TransactionType.EXPENSE && transaction.status === 'PAID'"
-                     [class.pending-amount]="transaction.status === 'PENDING'"
-                     [class.failed-amount]="transaction.status === 'FAILED'">
-                  {{ formatCurrency(Math.abs(transaction.amount)) }}
-                </div>
-                <div *ngIf="transaction.installmentInfo" class="installment-info">
-                  {{ transaction.installmentInfo.currentInstallment }}/{{ transaction.installmentInfo.totalInstallments }}
-                </div>
-              </td>
+            <td class="amount-cell">
+              <div class="amount-value"
+                   [class.income-amount]="transaction.type === TransactionType.INCOME && transaction.status === 'PAID'"
+                   [class.expense-amount]="transaction.type === TransactionType.EXPENSE && transaction.status === 'PAID'"
+                   [class.pending-amount]="transaction.status === 'PENDING'"
+                   [class.failed-amount]="transaction.status === 'FAILED'">
+                {{ transaction.amountFormatted }}
+              </div>
+              <div *ngIf="transaction.installmentInfo" class="installment-info">
+                {{ transaction.installmentInfo.currentInstallment }}/{{ transaction.installmentInfo.totalInstallments }}
+              </div>
+            </td>
 
-              <td class="type-cell">
+            <td class="type-cell">
                 <span class="transaction-type-badge" [class]="getTransactionTypeBadgeClass(transaction)">
                   {{ getTransactionTypeLabel(transaction) }}
                 </span>
-              </td>
+            </td>
 
-              <td class="date-cell">
-                {{ formatDate(transaction.dueDate) }}
-              </td>
+            <td class="date-cell">
+              {{ formatDate(transaction.dueDate) }}
+            </td>
 
-              <td class="status-cell">
+            <td class="status-cell">
                 <span class="status-text" [class]="'status-' + transaction.status.toLowerCase()">
                   {{ getStatusLabel(transaction.status) }}
                 </span>
-              </td>
-            </tr>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>

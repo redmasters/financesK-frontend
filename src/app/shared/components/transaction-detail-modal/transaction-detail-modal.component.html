@@ -23,7 +23,7 @@
           </div>
         </div>
         <div class="transaction-amount" [class]="tx.type === TransactionType.INCOME ? 'income' : 'expense'">
-          {{ formatCurrency(tx.amount) }}
+          {{ tx.amountFormatted }}
         </div>
       </div>
 
@@ -54,7 +54,7 @@
       <div class="detail-section" *ngIf="tx.downPayment && tx.downPayment > 0">
         <h4>Valor de Entrada</h4>
         <div class="down-payment-amount">
-          {{ formatCurrency(tx.downPayment) }}
+          {{ tx.downPaymentFormatted }}
         </div>
       </div>
 

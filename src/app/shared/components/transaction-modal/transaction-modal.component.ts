@@ -1,4 +1,4 @@
-import {Component, inject, signal, output} from '@angular/core';
+import {Component, inject, output, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {TransactionApiService} from '../../../core/services/transaction-api.service';
@@ -9,13 +9,13 @@ import {CurrencyService} from '../../../core/services/currency.service';
 import {CurrencyInputDirective} from '../../directives/currency-input.directive';
 import {BrazilianDateInputDirective} from '../../directives/brazilian-date-input.directive';
 import {
+  AccountOperationType,
   CreateTransactionRequest,
-  UpdateTransactionRequest,
+  PaymentStatus,
+  RecurrencePattern,
   Transaction,
   TransactionType,
-  AccountOperationType,
-  RecurrencePattern,
-  PaymentStatus
+  UpdateTransactionRequest
 } from '../../../core/models/transaction.model';
 
 // Enum local para tipos de transação
@@ -142,7 +142,7 @@ export class TransactionModalComponent {
     this.updateForm = {
       description: transaction.description,
       amount: transaction.amount,
-      downPayment: transaction.downPayment || 0,
+      downPayment: transaction.downPayment|| 0,
       type: transaction.type,
       operationType: transaction.operationType,
       status: transaction.status,
@@ -219,7 +219,7 @@ export class TransactionModalComponent {
     const requestData = this.prepareTransactionData();
 
     this.transactionApiService.createTransaction(requestData).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading.set(false);
         this.close();
         this.transactionCreated.emit();
@@ -288,15 +288,6 @@ export class TransactionModalComponent {
       this.transactionForm.currentInstallment = 1;
     }
   }
-
-  /**
-   * Valida o formulário
-   */
-  private isFormValid(): boolean {
-    return this.transactionForm.description.trim() !== '' &&
-      this.transactionForm.amount > 0;
-  }
-
   /**
    * Reseta os formulários
    */
@@ -423,9 +414,7 @@ export class TransactionModalComponent {
     // Para o preview, sempre trata o valor como centavos vindos da diretiva
     // A diretiva sempre envia valores em centavos, mesmo no modo de edição
     const reaisValue = value / 100;
-    const formatted = `R$ ${reaisValue.toFixed(2).replace('.', ',')}`;
-
-    return formatted;
+    return `R$ ${reaisValue.toFixed(2).replace('.', ',')}`;
   }
 
   /**
@@ -439,16 +428,14 @@ export class TransactionModalComponent {
     // Se estamos no modo de edição e o valor veio do backend, não converte
     if (this.isEditMode() && this.editingTransactionId) {
       // Valores do backend já vêm em reais
-      const formatted = this.currencyService.formatBRL(value);
-      return formatted;
+      return this.currencyService.formatBRL(value);
     } else {
       // Durante a digitação, a diretiva envia valores em centavos
       // Para o preview, apenas move a vírgula duas casas decimais
       const reaisValue = value / 100;
 
       // Para o preview, usa formatação simples (sem separador de milhares)
-      const formatted = `R$ ${reaisValue.toFixed(2).replace('.', ',')}`;
-      return formatted;
+      return `R$ ${reaisValue.toFixed(2).replace('.', ',')}`;
     }
   }
 }

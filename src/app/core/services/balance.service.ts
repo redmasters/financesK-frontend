@@ -5,8 +5,11 @@ import { PaymentStatus, TransactionType } from '../models/transaction.model';
 
 export interface FinancialData {
   totalIncome: number;
+  totalIncomeFormatted: string;
   totalExpense: number;
+  totalExpenseFormatted: string;
   balance: number;
+  balanceFormatted: string;
   currency: string;
 }
 
@@ -19,8 +22,11 @@ export class BalanceService {
   // Signal para os dados financeiros
   private _financialData = signal<FinancialData>({
     totalIncome: 0,
+    totalIncomeFormatted: "0",
     totalExpense: 0,
+    totalExpenseFormatted: "0",
     balance: 0,
+    balanceFormatted: "0",
     currency: 'R$'
   });
 
@@ -80,8 +86,11 @@ export class BalanceService {
         // Em caso de erro, mantém os dados atuais ou valores padrão
         this._financialData.set({
           totalIncome: 0,
+          totalIncomeFormatted: "0",
           totalExpense: 0,
+          totalExpenseFormatted: "0",
           balance: 0,
+          balanceFormatted: "0",
           currency: 'R$'
         });
       }
@@ -142,12 +151,5 @@ export class BalanceService {
     }
 
     return this.http.get<FinancialData>(`${this.baseUrl}/stats/income-expense-balance`, { params });
-  }
-
-  /**
-   * Atualiza os dados financeiros de forma simples (compatibilidade)
-   */
-  updateFinancialData(userId: number, startDate: string, endDate: string, status?: PaymentStatus): void {
-    this.refreshFinancialData(userId, status, undefined, undefined, undefined, undefined, undefined, undefined, startDate, endDate);
   }
 }

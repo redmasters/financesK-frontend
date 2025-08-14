@@ -6,7 +6,6 @@ import {TransactionService} from '../../core/services/transaction.service';
 import {TransactionApiService} from '../../core/services/transaction-api.service';
 import {CategoryService} from '../../core/services/category.service';
 import {NotificationService} from '../../core/services/notification.service';
-import {CurrencyService} from '../../core/services/currency.service';
 import {BrazilianDateInputDirective} from '../../shared/directives/brazilian-date-input.directive';
 import {
   PaymentStatus,
@@ -36,7 +35,6 @@ export class HomeComponent {
   private transactionApiService = inject(TransactionApiService);
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
-  private currencyService = inject(CurrencyService);
 
   // Referência aos modais
   @ViewChild(TransactionModalComponent) transactionModal!: TransactionModalComponent;
@@ -220,14 +218,6 @@ export class HomeComponent {
 
     return statusLabels[status as string] || status;
   }
-
-  /**
-   * Formata valor monetário para valores que já vêm em reais do backend
-   */
-  formatCurrency(value: number): string {
-    return this.currencyService.formatBRL(value);
-  }
-
   /**
    * Retorna a data atual formatada
    */
@@ -240,7 +230,6 @@ export class HomeComponent {
    */
   getMonthProgress(): number {
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     const totalDays = lastDay.getDate();

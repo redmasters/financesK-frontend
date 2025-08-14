@@ -62,6 +62,8 @@ export interface TransactionDetail {
   id: number;
   description: string;
   amount: number;
+  amountFormatted: string;
+  downPaymentFormatted?: string;
   downPayment?: number;
   type: TransactionType;
   operationType: AccountOperationType;
@@ -116,7 +118,9 @@ export interface Transaction {
   id: number;
   description: string;
   amount: number;
+  amountFormatted: string;
   downPayment?: number;
+  downPaymentFormatted?: string;
   type: TransactionType;
   operationType: AccountOperationType;
   status: PaymentStatus;
