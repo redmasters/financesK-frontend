@@ -2,15 +2,13 @@
 # Docker Compose para FinancesK Frontend
 # =============================================================================
 
-version: '3.8'
-
 # Redes compartilhadas
 networks:
   finances-network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.25.0.0/16
   # Conecta à rede externa existente do backend
   microservices-network:
     external: true
