@@ -98,6 +98,7 @@ export interface TransactionSearchResponse {
 // Interface para parâmetros de busca
 export interface TransactionSearchParams {
   userId: number;
+  accountsId?: number[];
   startDate: string;
   endDate: string;
   type?: TransactionType;

@@ -49,6 +49,7 @@ export class BalanceService {
    */
   refreshFinancialData(
     userId: number,
+    accountsId?: number[],
     status?: PaymentStatus,
     categoryId?: number,
     isRecurring?: boolean,
@@ -64,6 +65,7 @@ export class BalanceService {
 
     this.getIncomeExpenseBalance(
       userId,
+      accountsId,
       status,
       categoryId,
       isRecurring,
@@ -102,6 +104,7 @@ export class BalanceService {
    */
   private getIncomeExpenseBalance(
     userId: number,
+    accountsId?: number[],
     status?: PaymentStatus,
     categoryId?: number,
     isRecurring?: boolean,

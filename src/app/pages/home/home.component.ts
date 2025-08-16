@@ -51,6 +51,7 @@ export class HomeComponent {
   startDate: string = '';
   endDate: string = '';
   userId: number = 1;
+  accountsId: number[] = [1]; // IDs de contas do usuário, pode ser dinâmico
 
   // Propriedades para lista de transações
   selectedTransactionType: TransactionType | '' = '';
@@ -128,6 +129,7 @@ export class HomeComponent {
   loadTransactions(): void {
     const params: TransactionSearchParams = {
       userId: this.userId,
+      accountsId: this.accountsId,
       startDate: this.startDate,
       endDate: this.endDate,
       page: this.currentPage,
@@ -171,6 +173,7 @@ export class HomeComponent {
   updateFinancialData(): void {
     this.balanceService.refreshFinancialData(
       this.userId,
+      this.accountsId,
       this.selectedStatus !== 'ALL' ? this.selectedStatus : undefined,
       this.selectedCategoryId,
       this.selectedIsRecurring,
