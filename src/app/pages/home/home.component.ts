@@ -394,4 +394,29 @@ export class HomeComponent {
       });
     }
   }
+
+  /**
+   * Edita transação diretamente da lista
+   */
+  editTransaction(transaction: Transaction): void {
+    this.transactionModal.openForEdit(transaction);
+  }
+
+  /**
+   * Confirma e deleta transação diretamente da lista
+   */
+  confirmDeleteTransaction(transaction: Transaction): void {
+    if (confirm(`Tem certeza que deseja excluir a transação "${transaction.description}"?`)) {
+      this.transactionApiService.deleteTransaction(transaction.id).subscribe({
+        next: () => {
+          this.updateFinancialData();
+          this.notificationService.success('Transação excluída com sucesso!');
+        },
+        error: (error) => {
+          console.error('Erro ao excluir transação:', error);
+          this.notificationService.error('Erro ao excluir transação');
+        }
+      });
+    }
+  }
 }

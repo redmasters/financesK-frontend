@@ -598,6 +598,25 @@
   border: 1px solid var(--border);
   background: white;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+  /* Esconde a scrollbar quando não necessária */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
 }
 
 .transactions-table {
@@ -1014,4 +1033,160 @@
 
 .pagination-controls {
   animation: fadeIn 0.4s ease-out;
+}
+
+/* Estilos para a nova coluna de ações na tabela de transações */
+.actions-cell {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  min-width: 100px;
+  width: 100px;
+  white-space: nowrap;
+
+  .btn-action {
+    background: none;
+    border: none;
+    padding: 0.4rem;
+    margin: 0 0.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    display: inline-block;
+    vertical-align: middle;
+    min-width: 32px;
+    height: 32px;
+    line-height: 1;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.btn-edit {
+      color: var(--info);
+
+      &:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+      }
+    }
+
+    &.btn-delete {
+      color: var(--danger);
+
+      &:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+      }
+    }
+
+    i {
+      font-size: 0.8rem;
+      display: block;
+    }
+  }
+}
+
+/* Ajustes na tabela para acomodar a nova coluna e evitar scroll horizontal */
+.transactions-table {
+  table-layout: fixed;
+
+  th:last-child,
+  td:last-child {
+    width: 100px;
+    min-width: 100px;
+    text-align: center;
+  }
+
+  /* Ajuste das outras colunas para caber melhor */
+  th:nth-child(1), td:nth-child(1) { /* Descrição */
+    width: 25%;
+    min-width: 180px;
+  }
+
+  th:nth-child(2), td:nth-child(2) { /* Categoria */
+    width: 15%;
+    min-width: 100px;
+  }
+
+  th:nth-child(3), td:nth-child(3) { /* Valor */
+    width: 15%;
+    min-width: 100px;
+  }
+
+  th:nth-child(4), td:nth-child(4) { /* Tipo */
+    width: 15%;
+    min-width: 100px;
+  }
+
+  th:nth-child(5), td:nth-child(5) { /* Vencimento */
+    width: 15%;
+    min-width: 100px;
+  }
+
+  th:nth-child(6), td:nth-child(6) { /* Status */
+    width: 15%;
+    min-width: 100px;
+  }
+}
+
+/* Melhoria no container da tabela para responsividade */
+.transactions-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+  /* Esconde a scrollbar quando não necessária */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+/* Responsividade aprimorada para mobile */
+@media (max-width: 768px) {
+  .transactions-table {
+    font-size: 0.85rem;
+
+    th, td {
+      padding: 0.75rem 0.5rem;
+    }
+
+    .actions-cell {
+      .btn-action {
+        padding: 0.3rem;
+        margin: 0 0.05rem;
+        min-width: 24px;
+        height: 24px;
+
+        i {
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+
+  /* Em mobile, pode mostrar scroll horizontal quando necessário */
+  .transactions-table-container {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
 }

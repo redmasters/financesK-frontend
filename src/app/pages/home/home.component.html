@@ -216,6 +216,7 @@
             <th><i class="fas fa-info"></i> Tipo</th>
             <th><i class="fas fa-calendar"></i> Vencimento</th>
             <th><i class="fas fa-check-circle"></i> Status</th>
+            <th><i class="fas fa-cog"></i> Ações</th>
           </tr>
           </thead>
           <tbody>
@@ -264,6 +265,16 @@
                 <span class="status-text" [class]="'status-' + transaction.status.toLowerCase()">
                   {{ getStatusLabel(transaction.status) }}
                 </span>
+            </td>
+
+            <!-- Ações -->
+            <td class="actions-cell">
+              <button class="btn-action btn-edit" (click)="editTransaction(transaction)">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-action btn-delete" (click)="confirmDeleteTransaction(transaction)">
+                <i class="fas fa-trash"></i>
+              </button>
             </td>
           </tr>
           </tbody>
