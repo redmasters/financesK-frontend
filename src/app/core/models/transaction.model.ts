@@ -45,6 +45,7 @@ export enum SortDirection {
 // Enum para campos de ordenação
 export enum SortField {
   DUE_DATE = 'DUE_DATE',
+  DUE_DATE_AND_STATUS = 'DUE_DATE_AND_STATUS',
   CREATED_AT = 'CREATED_AT',
   AMOUNT = 'AMOUNT',
   DESCRIPTION = 'DESCRIPTION'
@@ -101,9 +102,17 @@ export interface PageInfo {
 
 // Interface para response paginada
 export interface TransactionSearchResponse {
-  content: TransactionDetail[];
-  page: PageInfo;
-  balance:  FinancialData;
+  transactions: {
+    content: TransactionDetail[];
+    page: PageInfo;
+  };
+  totalIncome: number;
+  totalIncomeFormatted: string;
+  totalExpense: number;
+  totalExpenseFormatted: string;
+  balance: number;
+  balanceFormatted: string;
+  currency: string;
 }
 
 // Interface para parâmetros de busca

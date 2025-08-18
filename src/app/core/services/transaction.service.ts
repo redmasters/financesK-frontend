@@ -75,7 +75,7 @@ export class TransactionService {
       endDate: params.endDate,
       page: params.page || 0,
       size: params.size || 10,
-      sortField: params.sortField || 'DUE_DATE',
+      sortField: params.sortField || 'DUE_DATE_AND_STATUS',
       sortDirection: params.sortDirection || 'DESC'
     };
     // Adiciona parâmetros opcionais apenas se definidos
@@ -105,13 +105,68 @@ export class TransactionService {
     }
 
     this.transactionApiService.searchTransactions(apiParams).subscribe({
-      next: (response: TransactionSearchResponse) => {
-        this._transactions.set(response.content);
-        this._financialData.set(response.balance);
-        this._totalElements.set(response.page.totalElements);
-        this._totalPages.set(response.page.totalPages);
-        this._currentPage.set(response.page.number);
-        this._pageSize.set(response.page.size);
+      next: (response: TransactionSearchResponse | any) => {
+        // Nova estrutura da API com dados financeiros integrados
+        if (response && response.transactions && Array.isArray(response.transactions.content)) {
+          // Estrutura nova: response.transactions.content
+          this._transactions.set(response.transactions.content);
+
+          // Dados de paginação da nova estrutura
+          if (response.transactions.page) {
+            this._totalElements.set(response.transactions.page.totalElements || 0);
+            this._totalPages.set(response.transactions.page.totalPages || 0);
+            this._currentPage.set(response.transactions.page.number || 0);
+            this._pageSize.set(response.transactions.page.size || 20);
+          }
+
+          // Dados financeiros da nova estrutura
+          const financialData: FinancialData = {
+            totalIncome: response.totalIncome || 0,
+            totalIncomeFormatted: response.totalIncomeFormatted || 'R$ 0,00',
+            totalExpense: response.totalExpense || 0,
+            totalExpenseFormatted: response.totalExpenseFormatted || 'R$ 0,00',
+            balance: response.balance || 0,
+            balanceFormatted: response.balanceFormatted || 'R$ 0,00',
+            currency: response.currency || 'R$'
+          };
+          this._financialData.set(financialData);
+
+        } else if (response && Array.isArray(response.content)) {
+          // Estrutura antiga para compatibilidade: response.content
+          this._transactions.set(response.content);
+
+          if (response.page) {
+            this._totalElements.set(response.page.totalElements || 0);
+            this._totalPages.set(response.page.totalPages || 0);
+            this._currentPage.set(response.page.number || 0);
+            this._pageSize.set(response.page.size || 20);
+          } else {
+            this._totalElements.set(response.content.length);
+            this._totalPages.set(1);
+            this._currentPage.set(0);
+            this._pageSize.set(20);
+          }
+
+          // Verificar se há dados de balanço na estrutura antiga
+          if (response.balance) {
+            this._financialData.set(response.balance);
+          }
+
+        } else if (Array.isArray(response)) {
+          // Se a resposta for apenas um array de transações
+          this._transactions.set(response);
+          this._totalElements.set(response.length);
+          this._totalPages.set(1);
+          this._currentPage.set(0);
+          this._pageSize.set(20);
+        } else {
+          this._transactions.set([]);
+          this._totalElements.set(0);
+          this._totalPages.set(0);
+          this._currentPage.set(0);
+          this._pageSize.set(20);
+        }
+
         this._loading.set(false);
       },
       error: (error) => {
@@ -145,4 +200,3 @@ export class TransactionService {
     return this.transactionApiService.deleteTransaction(id);
   }
 }
-

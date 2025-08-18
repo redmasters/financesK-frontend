@@ -31,7 +31,6 @@ import {
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
-  private balanceService = inject(BalanceService);
   private transactionService = inject(TransactionService);
   private transactionApiService = inject(TransactionApiService);
   private categoryService = inject(CategoryService);
@@ -133,8 +132,8 @@ export class HomeComponent {
       endDate: this.endDate,
       page: this.currentPage,
       size: this.pageSize,
-      sortField: SortField.DUE_DATE,
-      sortDirection: SortDirection.DESC
+      sortField: SortField.DUE_DATE_AND_STATUS,
+      sortDirection: SortDirection.ASC
     };
 
     // Adiciona filtros opcionais apenas se definidos
@@ -170,21 +169,6 @@ export class HomeComponent {
    * Atualiza os dados financeiros com base nos filtros selecionados
    */
   updateFinancialData(): void {
-    this.balanceService.refreshFinancialData(
-      this.userId,
-      this.accountsId,
-      this.selectedStatus !== 'ALL' ? this.selectedStatus : undefined,
-      this.selectedCategoryId,
-      this.selectedIsRecurring,
-      this.selectedHasInstallments,
-      this.selectedDescription,
-      this.selectedMinAmount,
-      this.selectedMaxAmount,
-      this.startDate,
-      this.endDate,
-      this.selectedTransactionType || undefined
-    );
-    // Também atualiza a lista de transações quando os filtros mudam
     this.loadTransactions();
   }
 

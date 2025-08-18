@@ -13,6 +13,19 @@ export interface FinancialData {
   currency: string;
 }
 
+/**
+ * @deprecated Este serviço está DEPRECIADO desde v2.0.0
+ *
+ * O endpoint /api/v1/transactions/stats/income-expense-balance não deve mais ser usado.
+ * Os dados financeiros (totalIncome, totalExpense, balance) agora vêm integrados
+ * na resposta da busca paginada de transações (/api/v1/transactions/search).
+ *
+ * Use o TransactionService.searchTransactions() que retorna:
+ * - Lista de transações paginada
+ * - Dados financeiros calculados com base nos filtros aplicados
+ *
+ * Este serviço será removido em versões futuras.
+ */
 @Injectable({
   providedIn: 'root'
 })
