@@ -132,8 +132,8 @@ export class HomeComponent {
       endDate: this.endDate,
       page: this.currentPage,
       size: this.pageSize,
-      sortField: SortField.DUE_DATE_AND_STATUS,
-      sortDirection: SortDirection.ASC
+      sortField: SortField.DUE_DATE,
+      sortDirection: SortDirection.DESC
     };
 
     // Adiciona filtros opcionais apenas se definidos
