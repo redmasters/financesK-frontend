@@ -1,0 +1,242 @@
+<div class="accounts-container">
+  <div class="accounts-header">
+    <h1>Contas Bancárias</h1>
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="showForm()"
+      [disabled]="isFormVisible()">
+      <i class="fas fa-plus"></i>
+      Nova Conta
+    </button>
+  </div>
+
+  <!-- Formulário de Conta -->
+  <div class="account-form-container" [class.visible]="isFormVisible()">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>{{ editingAccount() ? 'Editar Conta' : 'Nova Conta Bancária' }}</h2>
+        <button type="button" class="btn-close" (click)="hideForm()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="account-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="accountName">Nome da Conta *</label>
+            <input
+              type="text"
+              id="accountName"
+              formControlName="accountName"
+              class="form-control"
+              placeholder="Ex: Itaú Conta Corrente"
+              maxlength="100">
+            <div class="error-message"
+                 *ngIf="accountForm.get('accountName')?.touched && accountForm.get('accountName')?.errors">
+              <span *ngIf="accountForm.get('accountName')?.errors?.['required']">
+                Nome da conta é obrigatório
+              </span>
+              <span *ngIf="accountForm.get('accountName')?.errors?.['maxlength']">
+                Nome não pode exceder 100 caracteres
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accountType">Tipo de Conta *</label>
+            <select id="accountType" formControlName="accountType" class="form-control">
+              <option value="">Selecione o tipo</option>
+              <option *ngFor="let type of accountTypes" [value]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+            <div class="error-message"
+                 *ngIf="accountForm.get('accountType')?.touched && accountForm.get('accountType')?.errors">
+              <span *ngIf="accountForm.get('accountType')?.errors?.['required']">
+                Tipo de conta é obrigatório
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="accountDescription">Descrição</label>
+          <textarea
+            id="accountDescription"
+            formControlName="accountDescription"
+            class="form-control"
+            placeholder="Descrição opcional da conta"
+            rows="3"
+            maxlength="255"></textarea>
+          <div class="error-message"
+               *ngIf="accountForm.get('accountDescription')?.touched && accountForm.get('accountDescription')?.errors">
+            <span *ngIf="accountForm.get('accountDescription')?.errors?.['maxlength']">
+              Descrição não pode exceder 255 caracteres
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="accountCurrentBalance">Saldo Atual</label>
+            <div class="currency-input-container">
+              <span class="currency-symbol">R$</span>
+              <input
+                type="number"
+                id="accountCurrentBalance"
+                formControlName="accountCurrentBalance"
+                class="form-control currency-input"
+                placeholder="0,00"
+                step="0.01"
+                min="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="bankInstitutionId">Instituição Bancária</label>
+            <select id="bankInstitutionId" formControlName="bankInstitutionId" class="form-control">
+              <option value="">Selecione uma instituição (opcional)</option>
+              <option *ngFor="let institution of bankInstitutions()" [value]="institution.institutionId">
+                {{ institution.institutionName }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Campos específicos para Cartão de Crédito -->
+        <div *ngIf="shouldShowCreditFields()" class="credit-card-fields">
+          <h3>Configurações do Cartão de Crédito</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="accountCreditLimit">Limite de Crédito</label>
+              <div class="currency-input-container">
+                <span class="currency-symbol">R$</span>
+                <input
+                  type="number"
+                  id="accountCreditLimit"
+                  formControlName="accountCreditLimit"
+                  class="form-control currency-input"
+                  placeholder="0,00"
+                  step="0.01"
+                  min="0">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="accountStatementClosingDate">Dia do Fechamento da Fatura</label>
+              <input
+                type="number"
+                id="accountStatementClosingDate"
+                formControlName="accountStatementClosingDate"
+                class="form-control"
+                placeholder="Ex: 7"
+                min="1"
+                max="31">
+            </div>
+
+            <div class="form-group">
+              <label for="accountPaymentDueDate">Dia do Vencimento</label>
+              <input
+                type="number"
+                id="accountPaymentDueDate"
+                formControlName="accountPaymentDueDate"
+                class="form-control"
+                placeholder="Ex: 15"
+                min="1"
+                max="31">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="hideForm()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="!accountForm.valid">
+            {{ editingAccount() ? 'Atualizar' : 'Criar' }} Conta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lista de Contas -->
+  <div class="accounts-list">
+    <div *ngIf="accountService.isLoading()" class="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      Carregando contas...
+    </div>
+
+    <div *ngIf="!accountService.isLoading() && accountService.accounts().length === 0" class="empty-state">
+      <i class="fas fa-university"></i>
+      <h3>Nenhuma conta cadastrada</h3>
+      <p>Cadastre sua primeira conta bancária para começar a gerenciar suas finanças.</p>
+      <button type="button" class="btn-primary" (click)="showForm()">
+        <i class="fas fa-plus"></i>
+        Criar Primeira Conta
+      </button>
+    </div>
+
+    <div class="accounts-grid" *ngIf="!accountService.isLoading() && accountService.accounts().length > 0">
+      <div *ngFor="let account of accountService.accounts()" class="account-card">
+        <div class="account-header">
+          <div class="account-info">
+            <h3>{{ account.accountName }}</h3>
+            <span class="account-type-badge" [class]="'badge-' + account.accountType.toLowerCase().replace('_', '-')">
+              {{ getAccountTypeLabel(account.accountType) }}
+            </span>
+          </div>
+          <div class="account-actions">
+            <button type="button" class="btn-icon" (click)="editAccount(account)" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-icon btn-danger" (click)="deleteAccount(account)" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="account-details">
+          <div class="balance">
+            <span class="balance-label">Saldo Atual:</span>
+            <span class="balance-value" [class.negative]="account.accountCurrentBalance < 0">
+              {{ account.accountCurrentBalanceFormatted }}
+            </span>
+          </div>
+
+          <div *ngIf="account.accountDescription" class="description">
+            <span class="description-label">Descrição:</span>
+            <p>{{ account.accountDescription }}</p>
+          </div>
+
+          <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-info">
+            <div *ngIf="account.accountCreditLimit" class="credit-limit">
+              <span class="label">Limite:</span>
+              <span class="value">{{ account.accountCreditLimitFormatted }}</span>
+            </div>
+            <div class="credit-dates">
+              <span *ngIf="account.accountStatementClosingDate" class="closing-date">
+                Fechamento: {{ account.accountStatementClosingDate }}
+              </span>
+              <span *ngIf="account.accountPaymentDueDate" class="due-date">
+                Vencimento: {{ account.accountPaymentDueDate }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="account.bankInstitutionName" class="bank-info">
+            <span class="label">Instituição:</span>
+            <span class="value">{{ account.bankInstitutionName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
