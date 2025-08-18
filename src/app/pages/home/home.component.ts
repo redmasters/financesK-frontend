@@ -1,7 +1,8 @@
 import {Component, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {BalanceService, FinancialData} from '../../core/services/balance.service';
+import {BalanceService} from '../../core/services/balance.service';
+import {FinancialData} from '../../core/models/transaction.model';
 import {TransactionService} from '../../core/services/transaction.service';
 import {TransactionApiService} from '../../core/services/transaction-api.service';
 import {CategoryService} from '../../core/services/category.service';
@@ -44,9 +45,7 @@ export class HomeComponent {
   // Enums para uso no template
   PaymentStatus = PaymentStatus;
   TransactionType = TransactionType;
-  Math = Math;
-
-  // Filtros do usuário
+// Filtros do usuário
   selectedStatus: PaymentStatus | 'ALL' = 'ALL';
   startDate: string = '';
   endDate: string = '';
@@ -83,8 +82,8 @@ export class HomeComponent {
   }
 
   // Getters para acessar os signals do serviço
-  get financialData(): FinancialData {
-    return this.balanceService.financialData();
+  get financialData(): FinancialData{
+    return this.transactionService.financialData();
   }
 
   get transactions() {

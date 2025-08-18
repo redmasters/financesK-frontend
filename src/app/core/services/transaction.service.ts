@@ -1,7 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import { TransactionApiService } from './transaction-api.service';
+import {Injectable, inject, signal} from '@angular/core';
+import {Observable} from 'rxjs';
+import {TransactionApiService} from './transaction-api.service';
 import {
+  FinancialData,
   Transaction,
   TransactionSearchParams,
   TransactionSearchResponse,
@@ -16,6 +17,16 @@ export class TransactionService {
 
   // Signals para estado
   private _transactions = signal<Transaction[]>([]);
+  private _financialData = signal<FinancialData>({
+    totalIncome: 0,
+    totalIncomeFormatted: '0',
+    totalExpense: 0,
+    totalExpenseFormatted: '0',
+    balance: 0,
+    balanceFormatted: '0',
+    currency: 'R$'
+  });
+
   private _loading = signal<boolean>(false);
   private _totalElements = signal<number>(0);
   private _totalPages = signal<number>(0);
@@ -25,6 +36,10 @@ export class TransactionService {
   // Getters read-only para os signals
   get transactions() {
     return this._transactions.asReadonly();
+  }
+
+  get financialData() {
+    return this._financialData.asReadonly();
   }
 
   get loading() {
@@ -92,6 +107,7 @@ export class TransactionService {
     this.transactionApiService.searchTransactions(apiParams).subscribe({
       next: (response: TransactionSearchResponse) => {
         this._transactions.set(response.content);
+        this._financialData.set(response.balance);
         this._totalElements.set(response.page.totalElements);
         this._totalPages.set(response.page.totalPages);
         this._currentPage.set(response.page.number);

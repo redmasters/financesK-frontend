@@ -81,6 +81,16 @@ export interface TransactionDetail {
   accountName: string;
 }
 
+export interface FinancialData {
+  totalIncome: number;
+  totalIncomeFormatted: string;
+  totalExpense: number;
+  totalExpenseFormatted: string;
+  balance: number;
+  balanceFormatted: string;
+  currency: string;
+}
+
 // Interface para informações de paginação
 export interface PageInfo {
   size: number;
@@ -93,6 +103,7 @@ export interface PageInfo {
 export interface TransactionSearchResponse {
   content: TransactionDetail[];
   page: PageInfo;
+  balance:  FinancialData;
 }
 
 // Interface para parâmetros de busca
