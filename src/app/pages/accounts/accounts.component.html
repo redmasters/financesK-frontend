@@ -196,9 +196,20 @@
                   {{ type }}
                 </span>
               </div>
-              <div class="total-balance">
-                <span class="balance-label">Total:</span>
-                <span class="balance-value">{{ formatBankTotalBalance(bankName) }}</span>
+
+              <!-- Totais separados: Saldo e Limite de Crédito -->
+              <div class="bank-totals">
+                <!-- Saldo Total (contas regulares) -->
+                <div *ngIf="bankHasRegularAccounts(bankName)" class="total-balance">
+                  <span class="balance-label">Saldo:</span>
+                  <span class="balance-value">{{ formatBankTotalBalance(bankName) }}</span>
+                </div>
+
+                <!-- Limite de Crédito Total -->
+                <div *ngIf="bankHasCreditCards(bankName)" class="total-credit">
+                  <span class="credit-label">Limite:</span>
+                  <span class="credit-value">{{ formatBankTotalCreditLimit(bankName) }}</span>
+                </div>
               </div>
             </div>
           </div>

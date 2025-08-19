@@ -127,25 +127,63 @@ export class AccountsComponent implements OnInit {
   }
 
   /**
-   * Calcula o saldo total de um banco
+   * Calcula o saldo total de um banco (excluindo cartões de crédito)
    */
   getBankTotalBalance(bankName: string): number {
     const accounts = this.getAccountsByBank(bankName);
     return accounts.reduce((total, account) => {
-      if (account.accountType === AccountType.CARTAO_CREDITO) {
-        // Para cartão de crédito, considera o limite disponível
-        return total + this.getCreditAvailable(account);
-      } else {
+      if (account.accountType !== AccountType.CARTAO_CREDITO) {
         return total + account.accountCurrentBalance;
       }
+      return total;
     }, 0);
   }
 
   /**
-   * Formata o saldo total do banco
+   * Calcula o limite total disponível de cartões de crédito de um banco
+   */
+  getBankTotalCreditLimit(bankName: string): number {
+    const accounts = this.getAccountsByBank(bankName);
+    return accounts.reduce((total, account) => {
+      if (account.accountType === AccountType.CARTAO_CREDITO) {
+        return total + this.getCreditAvailable(account);
+      }
+      return total;
+    }, 0);
+  }
+
+  /**
+   * Verifica se um banco tem cartões de crédito
+   */
+  bankHasCreditCards(bankName: string): boolean {
+    const accounts = this.getAccountsByBank(bankName);
+    return accounts.some(account => account.accountType === AccountType.CARTAO_CREDITO);
+  }
+
+  /**
+   * Verifica se um banco tem contas que não são cartão de crédito
+   */
+  bankHasRegularAccounts(bankName: string): boolean {
+    const accounts = this.getAccountsByBank(bankName);
+    return accounts.some(account => account.accountType !== AccountType.CARTAO_CREDITO);
+  }
+
+  /**
+   * Formata o saldo total do banco (sem cartões de crédito)
    */
   formatBankTotalBalance(bankName: string): string {
     const total = this.getBankTotalBalance(bankName);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(total);
+  }
+
+  /**
+   * Formata o limite total de cartões de crédito do banco
+   */
+  formatBankTotalCreditLimit(bankName: string): string {
+    const total = this.getBankTotalCreditLimit(bankName);
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
