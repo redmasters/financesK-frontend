@@ -88,6 +88,78 @@
   }
 }
 
+/* Container dos controles do header */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Botão de Privacidade no Header */
+.privacy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(67, 97, 238, 0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.15);
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+
+  &:active {
+    transform: translateY(-1px);
+  }
+
+  i {
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
 /* Botões de ação aprimorados */
 .btn-action {
   display: flex;
@@ -1395,3 +1467,159 @@
     transform: translateY(-1px);
   }
 }
+
+/* Dropdown de Adicionar Transação */
+.add-transaction-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-add {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 140px;
+  box-shadow: 0 4px 15px rgba(67, 97, 238, 0.25);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+
+  &.active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+  }
+
+  .dropdown-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+    margin-left: auto;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+
+  @media (max-width: 768px) {
+    min-width: 120px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: dropdownFadeIn 0.3s ease forwards;
+
+  @media (max-width: 768px) {
+    left: 0;
+    right: auto;
+    min-width: 180px;
+  }
+}
+
+@keyframes dropdownFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--dark);
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &:first-child {
+    border-radius: 12px 12px 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 12px 12px;
+  }
+
+  i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
+.income-item {
+  &:hover {
+    background: rgba(16, 185, 129, 0.05);
+    color: var(--success);
+  }
+
+  i {
+    color: var(--success);
+  }
+}
+
+.expense-item {
+  &:hover {
+    background: rgba(239, 68, 68, 0.05);
+    color: var(--danger);
+  }
+
+  i {
+    color: var(--danger);
+  }
+}
+

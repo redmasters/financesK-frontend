@@ -79,50 +79,9 @@
 
 /* Seção do Usuário */
 .user-section {
-  margin-top: auto; /* Empurra para o final da sidebar */
-  border-top: 1px solid rgba(255,255,255,0.1);
-  position: relative;
-}
-
-/* Controles de Privacidade */
-.privacy-controls {
-  padding: 1rem 1.5rem 0.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.privacy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.75rem;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px;
-  color: rgba(255,255,255,0.9);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1.1rem;
-
-  &:hover {
-    background: rgba(255,255,255,0.15);
-    border-color: rgba(255,255,255,0.3);
-    color: white;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  i {
-    transition: all 0.3s ease;
-  }
-
-  /* Animação quando oculta valores */
-  &:not(:hover) i.fa-eye-slash {
-    color: rgba(255, 193, 7, 0.9);
-  }
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 1rem;
 }
 
 .user-profile {
@@ -131,10 +90,11 @@
   padding: 1rem 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(0,0,0,0.1);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
 
   &:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.05);
   }
 }
 

@@ -7,14 +7,36 @@
       <p class="page-subtitle">Gerencie suas finanças de forma inteligente</p>
     </div>
     <div class="header-right">
-      <button class="btn-action btn-income" (click)="openIncomeModal()">
-        <i class="fas fa-plus-circle"></i>
-        Nova Receita
-      </button>
-      <button class="btn-action btn-expense" (click)="openExpenseModal()">
-        <i class="fas fa-plus"></i>
-        Nova Despesa
-      </button>
+      <div class="header-controls">
+
+
+        <!-- Dropdown de Adicionar Transação -->
+        <div class="add-transaction-dropdown">
+          <button class="btn-action btn-add" (click)="toggleAddDropdown()" [class.active]="showAddDropdown">
+            <i class="fas fa-plus"></i>
+            Adicionar
+            <i class="fas fa-chevron-down dropdown-arrow" [class.rotated]="showAddDropdown"></i>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div class="dropdown-menu" *ngIf="showAddDropdown" (click)="$event.stopPropagation()">
+            <button class="dropdown-item income-item" (click)="openIncomeModal()">
+              <i class="fas fa-plus-circle"></i>
+              <span>Nova Receita</span>
+            </button>
+            <button class="dropdown-item expense-item" (click)="openExpenseModal()">
+              <i class="fas fa-minus-circle"></i>
+              <span>Nova Despesa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botão de Privacidade -->
+        <button class="privacy-btn" (click)="toggleValueVisibility()" [title]="showValues ? 'Ocultar valores' : 'Mostrar valores'">
+          <i class="fas" [class.fa-eye]="showValues" [class.fa-eye-slash]="!showValues"></i>
+        </button>
+
+      </div>
     </div>
   </div>
 

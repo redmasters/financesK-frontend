@@ -64,6 +64,9 @@ export class HomeComponent {
   showAccountSelector: boolean = false; // Controla a visibilidade do seletor
   allAccountsSelected: boolean = true; // Indica se todas as contas estão selecionadas
 
+  // Dropdown de adicionar transação
+  showAddDropdown: boolean = false; // Controla a visibilidade do dropdown de adicionar
+
   // Propriedades para lista de transações
   selectedTransactionType: TransactionType | '' = '';
   selectedCategoryId: number | undefined = undefined;
@@ -79,9 +82,6 @@ export class HomeComponent {
   currentPage = 0;
   pageSize = 10;
 
-  // Transação sendo editada
-  editingTransaction: Transaction | null = null;
-
   // Estado da privacidade dos valores
   showValues = true;
 
@@ -94,6 +94,9 @@ export class HomeComponent {
 
     // Carrega categorias para uso nos modais de transação
     this.categoryService.getAllCategories().subscribe();
+
+    // Conecta ao serviço de privacidade
+    this.showValues = this.privacyService.getShowValues();
   }
 
   /**
@@ -159,8 +162,18 @@ export class HomeComponent {
     return this.categoryService.categories();
   }
 
-  get isLoadingCategories() {
-    return this.categoryService.loading();
+  /**
+   * Getter para acessar as contas do AccountService
+   */
+  get accounts(): Account[] {
+    return this.accountService.accounts();
+  }
+
+  /**
+   * Getter para verificar se está carregando contas
+   */
+  get isLoadingAccounts(): boolean {
+    return this.accountService.isLoading();
   }
 
   /**
@@ -261,6 +274,7 @@ export class HomeComponent {
 
     return statusLabels[status as string] || status;
   }
+
   /**
    * Retorna a data atual formatada
    */
@@ -311,17 +325,26 @@ export class HomeComponent {
   }
 
   /**
-   * Abre modal para criar receita
+   * Alterna a visibilidade do dropdown de adicionar transação
    */
-  openIncomeModal(): void {
-    this.transactionModal.open(TransactionType.INCOME);
+  toggleAddDropdown(): void {
+    this.showAddDropdown = !this.showAddDropdown;
   }
 
   /**
-   * Abre modal para criar despesa
+   * Abre modal para criar receita e fecha o dropdown
+   */
+  openIncomeModal(): void {
+    this.transactionModal.open(TransactionType.INCOME);
+    this.showAddDropdown = false;
+  }
+
+  /**
+   * Abre modal para criar despesa e fecha o dropdown
    */
   openExpenseModal(): void {
     this.transactionModal.open(TransactionType.EXPENSE);
+    this.showAddDropdown = false;
   }
 
   /**
@@ -478,27 +501,6 @@ export class HomeComponent {
   }
 
   /**
-   * Carrega as contas do usuário
-   */
-  private loadUserAccounts(): void {
-    this.accountService.loadAccounts(this.userId);
-  }
-
-  /**
-   * Getter para acessar as contas do AccountService
-   */
-  get accounts(): Account[] {
-    return this.accountService.accounts();
-  }
-
-  /**
-   * Getter para verificar se está carregando contas
-   */
-  get isLoadingAccounts(): boolean {
-    return this.accountService.isLoading();
-  }
-
-  /**
    * Retorna as contas selecionadas
    */
   getSelectedAccounts(): Account[] {
@@ -595,19 +597,6 @@ export class HomeComponent {
   }
 
   /**
-   * Retorna a classe CSS para o tipo de conta
-   */
-  getAccountTypeClass(accountType: AccountType): string {
-    const typeMap = {
-      [AccountType.CONTA_CORRENTE]: 'account-type-corrente',
-      [AccountType.CARTEIRA]: 'account-type-carteira',
-      [AccountType.CARTAO_CREDITO]: 'account-type-credito',
-      [AccountType.POUPANCA]: 'account-type-poupanca'
-    };
-    return typeMap[accountType] || '';
-  }
-
-  /**
    * Retorna o ícone para o tipo de conta
    */
   getAccountTypeIcon(accountType: AccountType): string {
@@ -621,15 +610,20 @@ export class HomeComponent {
   }
 
   /**
-   * Fecha o seletor de contas quando clica fora
+   * Fecha o seletor de contas e dropdown de adicionar quando clica fora
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
     const target = event.target as HTMLElement;
     const accountSelector = target.closest('.account-selector-container');
+    const addDropdown = target.closest('.add-transaction-dropdown');
 
     if (!accountSelector && this.showAccountSelector) {
       this.closeAccountSelector();
+    }
+
+    if (!addDropdown && this.showAddDropdown) {
+      this.showAddDropdown = false;
     }
   }
 
@@ -670,5 +664,13 @@ export class HomeComponent {
    */
   getDisplayValue(value: string): string {
     return this.privacyService.getDisplayValue(value);
+  }
+
+  /**
+   * Alterna a visibilidade dos valores monetários
+   */
+  toggleValueVisibility(): void {
+    this.privacyService.toggleValueVisibility();
+    this.showValues = this.privacyService.getShowValues();
   }
 }
