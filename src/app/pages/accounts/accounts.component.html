@@ -202,13 +202,13 @@
                 <!-- Saldo Total (contas regulares) -->
                 <div *ngIf="bankHasRegularAccounts(bankName)" class="total-balance">
                   <span class="balance-label">Saldo:</span>
-                  <span class="balance-value">{{ formatBankTotalBalance(bankName) }}</span>
+                  <span class="balance-value">{{ getDisplayValue(formatBankTotalBalance(bankName)) }}</span>
                 </div>
 
                 <!-- Limite de Crédito Total -->
                 <div *ngIf="bankHasCreditCards(bankName)" class="total-credit">
                   <span class="credit-label">Limite:</span>
-                  <span class="credit-value">{{ formatBankTotalCreditLimit(bankName) }}</span>
+                  <span class="credit-value">{{ getDisplayValue(formatBankTotalCreditLimit(bankName)) }}</span>
                 </div>
               </div>
             </div>
@@ -248,12 +248,13 @@
                 <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-limit-info">
                   <div class="credit-header">
                     <span class="credit-label">Limite Disponível:</span>
-                    <span class="credit-available">{{ formatCreditAvailable(account) }}</span>
+                    <span class="credit-available">{{ getDisplayValue(formatCreditAvailable(account)) }}</span>
                   </div>
 
                   <div class="credit-total">
                     <span class="credit-total-label">Limite Total:</span>
-                    <span class="credit-total-value">{{ account.accountCreditLimitFormatted }}</span>
+                    <span class="credit-total-value" *ngIf="account.accountCreditLimitFormatted">{{ getDisplayValue(account.accountCreditLimitFormatted) }}</span>
+                    <span class="credit-total-value" *ngIf="!account.accountCreditLimitFormatted">R$ 0,00</span>
                   </div>
 
                   <!-- Barra de progresso do uso do limite -->
@@ -269,7 +270,7 @@
                       </div>
                     </div>
                     <div class="usage-amount">
-                      <span class="used-amount">Usado: {{ account.accountCurrentBalanceFormatted }}</span>
+                      <span class="used-amount">Usado: {{ getDisplayValue(account.accountCurrentBalanceFormatted) }}</span>
                     </div>
                   </div>
                 </div>
@@ -278,7 +279,7 @@
                 <div *ngIf="account.accountType !== AccountType.CARTAO_CREDITO" class="balance">
                   <span class="balance-label">Saldo Atual:</span>
                   <span class="balance-value" [class.negative]="account.accountCurrentBalance < 0">
-                    {{ account.accountCurrentBalanceFormatted }}
+                    {{ getDisplayValue(account.accountCurrentBalanceFormatted) }}
                   </span>
                 </div>
 

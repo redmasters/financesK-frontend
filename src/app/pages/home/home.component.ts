@@ -2,13 +2,13 @@ import {Component, HostListener, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Router} from '@angular/router';
-import {BalanceService} from '../../core/services/balance.service';
 import {FinancialData} from '../../core/models/transaction.model';
 import {TransactionService} from '../../core/services/transaction.service';
 import {TransactionApiService} from '../../core/services/transaction-api.service';
 import {CategoryService} from '../../core/services/category.service';
 import {NotificationService} from '../../core/services/notification.service';
 import {AccountService} from '../../core/services/account.service';
+import {PrivacyService} from '../../core/services/privacy.service';
 import {BrazilianDateInputDirective} from '../../shared/directives/brazilian-date-input.directive';
 import {
   PaymentStatus,
@@ -39,6 +39,7 @@ export class HomeComponent {
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
   private accountService = inject(AccountService);
+  private privacyService = inject(PrivacyService);
   private router = inject(Router);
 
   // Referência aos modais
@@ -80,6 +81,9 @@ export class HomeComponent {
 
   // Transação sendo editada
   editingTransaction: Transaction | null = null;
+
+  // Estado da privacidade dos valores
+  showValues = true;
 
   constructor() {
     // Inicializa as datas com o mês atual
@@ -659,5 +663,12 @@ export class HomeComponent {
     // Se nenhuma conta individual está selecionada, retorna array vazio
     // Isso fará com que o backend retorne dados vazios, que é o comportamento correto
     return this.selectedAccountIds.length > 0 ? this.selectedAccountIds : [];
+  }
+
+  /**
+   * Método para ser usado no template para valores monetários
+   */
+  getDisplayValue(value: string): string {
+    return this.privacyService.getDisplayValue(value);
   }
 }

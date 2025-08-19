@@ -2,6 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NotificationComponent } from './shared/components/notification/notification.component';
+import { PrivacyService } from './core/services/privacy.service';
 
 @Component({
   selector: 'app-root',
@@ -23,11 +24,27 @@ export class AppComponent {
     avatar: '' // Por enquanto usando ícone padrão
   };
 
+  constructor(private privacyService: PrivacyService) {}
+
+  /**
+   * Getter para acessar o estado de privacidade
+   */
+  get showValues(): boolean {
+    return this.privacyService.getShowValues();
+  }
+
   /**
    * Alterna a visibilidade do card do usuário
    */
   toggleUserCard(): void {
     this.showUserCard = !this.showUserCard;
+  }
+
+  /**
+   * Alterna a visibilidade dos valores financeiros
+   */
+  toggleValueVisibility(): void {
+    this.privacyService.toggleValueVisibility();
   }
 
   /**

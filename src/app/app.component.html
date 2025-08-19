@@ -32,6 +32,13 @@
 
     <!-- Seção do Usuário -->
     <div class="user-section">
+      <!-- Botão de Privacidade dos Valores -->
+      <div class="privacy-controls">
+        <button class="privacy-btn" (click)="toggleValueVisibility()" [title]="showValues ? 'Ocultar valores' : 'Mostrar valores'">
+          <i class="fas" [class.fa-eye]="showValues" [class.fa-eye-slash]="!showValues"></i>
+        </button>
+      </div>
+
       <div class="user-profile" (click)="toggleUserCard()">
         <div class="user-avatar">
           <i class="fas fa-user-circle"></i>

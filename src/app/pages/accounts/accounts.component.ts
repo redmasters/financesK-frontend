@@ -1,10 +1,11 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AccountService } from '../../core/services/account.service';
 import { BankInstitutionService } from '../../core/services/bank-institution.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { CurrencyService } from '../../core/services/currency.service';
+import { PrivacyService } from '../../core/services/privacy.service';
 import { Account, AccountType, CreateAccountRequest } from '../../core/models/account.model';
 import { CurrencyInputDirective } from '../../shared/directives/currency-input.directive';
 
@@ -19,7 +20,6 @@ export class AccountsComponent implements OnInit {
   accountForm: FormGroup;
   isFormVisible = signal<boolean>(false);
   editingAccount = signal<Account | null>(null);
-  Math = Math;
 
   readonly AccountType = AccountType;
   readonly accountTypes = [
@@ -33,13 +33,15 @@ export class AccountsComponent implements OnInit {
   groupedAccounts = signal<{ [bankName: string]: Account[] }>({});
   expandedBanks = signal<Set<string>>(new Set());
 
-  constructor(
-    private fb: FormBuilder,
-    public accountService: AccountService,
-    private notificationService: NotificationService,
-    private bankInstitutionService: BankInstitutionService,
-    private currencyService: CurrencyService
-  ) {
+  // Serviços injetados
+  private fb = inject(FormBuilder);
+  public accountService = inject(AccountService);
+  private notificationService = inject(NotificationService);
+  private bankInstitutionService = inject(BankInstitutionService);
+  private currencyService = inject(CurrencyService);
+  private privacyService = inject(PrivacyService);
+
+  constructor() {
     this.accountForm = this.createForm();
 
     // Effect para reagir a mudanças nas contas
@@ -370,5 +372,12 @@ export class AccountsComponent implements OnInit {
     if (percentage >= 90) return 'danger';
     if (percentage >= 70) return 'warning';
     return 'success';
+  }
+
+  /**
+   * Método para ser usado no template para valores monetários
+   */
+  getDisplayValue(value: string): string {
+    return this.privacyService.getDisplayValue(value);
   }
 }
