@@ -29,6 +29,40 @@
         <span>Histórico</span>
       </a>
     </div>
+
+    <!-- Seção do Usuário -->
+    <div class="user-section">
+      <div class="user-profile" (click)="toggleUserCard()">
+        <div class="user-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser.name }}</span>
+        </div>
+        <div class="user-toggle">
+          <i class="fas fa-chevron-up" [class.rotated]="showUserCard"></i>
+        </div>
+      </div>
+
+      <!-- Card do Usuário (aparece ao clicar) -->
+      <div class="user-card" *ngIf="showUserCard">
+        <div class="user-card-header">
+          <div class="user-card-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="user-card-info">
+            <span class="user-card-name">{{ currentUser.name }}</span>
+            <span class="user-card-email">{{ currentUser.email }}</span>
+          </div>
+        </div>
+        <div class="user-card-actions">
+          <button class="logout-btn" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sair</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Conteúdo Principal -->
