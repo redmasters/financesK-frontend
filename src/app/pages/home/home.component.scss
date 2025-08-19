@@ -1363,3 +1363,24 @@
     }
   }
 }
+
+/* Estilos para tipos de conta no seletor */
+.account-type-corrente {
+  color: #059669;
+  background: rgba(5, 150, 105, 0.1);
+}
+
+.account-type-carteira {
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.account-type-credito {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.account-type-poupanca {
+  color: #0369a1;
+  background: rgba(3, 105, 161, 0.1);
+}

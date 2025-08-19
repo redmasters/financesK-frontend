@@ -83,14 +83,49 @@ export class HomeComponent {
     // Inicializa as datas com o mês atual
     this.initializeCurrentMonthDates();
 
-    // Carrega contas do usuário
-    this.loadUserAccounts();
-
-    // Carrega dados iniciais
-    this.updateFinancialData();
+    // Carrega contas do usuário e aguarda para carregar transações
+    this.loadUserAccountsAndData();
 
     // Carrega categorias para uso nos modais de transação
     this.categoryService.getAllCategories().subscribe();
+  }
+
+  /**
+   * Carrega as contas do usuário e depois carrega os dados financeiros
+   */
+  private loadUserAccountsAndData(): void {
+    this.accountService.loadAccounts(this.userId);
+
+    // Como o AccountService usa signals, vamos usar effect() para reagir às mudanças
+    const checkAccountsLoaded = () => {
+      const accounts = this.accountService.accounts();
+      if (accounts.length > 0) {
+        // Contas foram carregadas, agora pode buscar transações
+        this.updateFinancialData();
+        return true; // Indica que o efeito pode parar
+      }
+      return false;
+    };
+
+    // Verifica imediatamente se as contas já estão carregadas
+    if (!checkAccountsLoaded()) {
+      // Se não estão carregadas, cria um intervalo para verificar periodicamente
+      const intervalId = setInterval(() => {
+        if (checkAccountsLoaded()) {
+          clearInterval(intervalId);
+        }
+      }, 100); // Verifica a cada 100ms
+
+      // Timeout de segurança para evitar loop infinito
+      setTimeout(() => {
+        clearInterval(intervalId);
+        // Se após 5 segundos ainda não carregou, tenta carregar mesmo assim
+        if (this.accountService.accounts().length === 0) {
+          console.warn('Timeout ao aguardar carregamento de contas, carregando transações sem filtro de conta');
+          this.updateFinancialData();
+        }
+      }, 5000);
+    }
   }
 
   // Getters para acessar os signals do serviço
@@ -138,9 +173,12 @@ export class HomeComponent {
    * Carrega a lista de transações com base nos filtros
    */
   loadTransactions(): void {
+    // Prepara os IDs das contas selecionadas
+    const selectedAccountIds = this.getSelectedAccountIds();
+
     const params: TransactionSearchParams = {
       userId: this.userId,
-      accountsId: this.accountsId,
+      accountsId: selectedAccountIds.length > 0 ? selectedAccountIds : undefined,
       startDate: this.startDate,
       endDate: this.endDate,
       page: this.currentPage,
@@ -494,29 +532,50 @@ export class HomeComponent {
    */
   toggleAllAccounts(): void {
     this.allAccountsSelected = !this.allAccountsSelected;
+
     if (this.allAccountsSelected) {
+      // Quando "todas as contas" está marcado, limpa a seleção individual
       this.selectedAccountIds = [];
     } else {
+      // Quando "todas as contas" é desmarcado, marca todas individualmente
       this.selectedAccountIds = this.accounts.map(account => account.accountId);
     }
-    // Futuramente aqui será chamado updateFinancialData() quando integrar com backend
+
+    // Reset pagination and update data when account selection changes
+    this.currentPage = 0;
+    this.updateFinancialData();
   }
 
   /**
    * Alterna a seleção de uma conta específica
    */
   toggleAccountSelection(accountId: number): void {
-    const index = this.selectedAccountIds.indexOf(accountId);
-    if (index > -1) {
-      this.selectedAccountIds.splice(index, 1);
+    // Se "todas as contas" estiver marcado, desmarca e prepara para seleção individual
+    if (this.allAccountsSelected) {
+      this.allAccountsSelected = false;
+      // Marca todas as contas exceto a que foi desmarcada
+      this.selectedAccountIds = this.accounts
+        .map(account => account.accountId)
+        .filter(id => id !== accountId);
     } else {
-      this.selectedAccountIds.push(accountId);
+      // Lógica normal de marcar/desmarcar conta individual
+      const index = this.selectedAccountIds.indexOf(accountId);
+      if (index > -1) {
+        this.selectedAccountIds.splice(index, 1);
+      } else {
+        this.selectedAccountIds.push(accountId);
+      }
+
+      // Verifica se todas as contas estão selecionadas para ativar "todas as contas"
+      if (this.selectedAccountIds.length === this.accounts.length) {
+        this.allAccountsSelected = true;
+        this.selectedAccountIds = [];
+      }
     }
 
-    // Atualiza o estado "todas selecionadas"
-    this.allAccountsSelected = this.selectedAccountIds.length === 0;
-
-    // Futuramente aqui será chamado updateFinancialData() quando integrar com backend
+    // Reset pagination and update data when account selection changes
+    this.currentPage = 0;
+    this.updateFinancialData();
   }
 
   /**
@@ -573,5 +632,18 @@ export class HomeComponent {
    */
   closeAccountSelector(): void {
     this.showAccountSelector = false;
+  }
+
+  /**
+   * Retorna os IDs das contas selecionadas para enviar ao backend
+   */
+  getSelectedAccountIds(): number[] {
+    if (this.allAccountsSelected) {
+      return this.accounts.map(account => account.accountId);
+    }
+
+    // Se nenhuma conta individual está selecionada, retorna array vazio
+    // Isso fará com que o backend retorne dados vazios, que é o comportamento correto
+    return this.selectedAccountIds.length > 0 ? this.selectedAccountIds : [];
   }
 }
