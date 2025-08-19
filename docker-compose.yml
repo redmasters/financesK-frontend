@@ -1,166 +1,113 @@
-# =============================================================================
-# Docker Compose para FinancesK Frontend
-# =============================================================================
-
-# Redes compartilhadas
-networks:
-  finances-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.25.0.0/16
-  # Conecta à rede externa existente do backend
-  microservices-network:
-    external: true
-
 services:
-  # ---------------------------------------------------------------------------
-  # Desenvolvimento - Angular com hot reload (usando backend real)
-  # ---------------------------------------------------------------------------
+  # Frontend Development (Backend Real)
   frontend-dev:
     build:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: finances-frontend-dev
+    container_name: financesk-frontend-dev
     ports:
       - "4200:4200"
     volumes:
-      # Bind mount do código fonte para hot reload
       - .:/app
-      - node_modules:/app/node_modules
-      # Bind mount para evitar problemas de permissão
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=1000
-      - API_URL=http://financesk-app:8080
+      - API_URL=http://backend:8080
     networks:
-      - microservices-network  # Conecta à rede do backend real
+      - microservices-network
+    depends_on:
+      - nginx-real
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # ---------------------------------------------------------------------------
-  # Desenvolvimento com Mock Backend - Angular com backend simulado
-  # ---------------------------------------------------------------------------
+  # Nginx para Backend Real
+  nginx-real:
+    image: nginx:alpine
+    container_name: financesk-nginx-real
+    volumes:
+      - ./nginx-real-backend.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Frontend Development (Backend Mock)
   frontend-dev-mock:
     build:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: finances-frontend-dev-mock
+    container_name: financesk-frontend-dev-mock
     ports:
-      - "4201:4200"  # Porta diferente para não conflitar
+      - "4201:4200"
     volumes:
-      # Bind mount do código fonte para hot reload
       - .:/app
-      - node_modules:/app/node_modules
-      # Bind mount para evitar problemas de permissão
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=1000
-      - API_URL=http://backend-mock:8080
+      - API_URL=http://localhost:8081
     networks:
-      - finances-network
+      - financesk-mock-network
     depends_on:
       - backend-mock
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     profiles:
       - mock
 
-  # ---------------------------------------------------------------------------
-  # Produção - Nginx servindo arquivos estáticos (usando backend real)
-  # ---------------------------------------------------------------------------
+  # Mock Backend
+  backend-mock:
+    image: nginx:alpine
+    container_name: financesk-backend-mock
+    ports:
+      - "8080:80"
+    volumes:
+      - ./mock-backend.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - financesk-mock-network
+    restart: unless-stopped
+    profiles:
+      - mock
+
+  # Frontend Production (Backend Real)
   frontend-prod:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: finances-frontend-prod
+    container_name: financesk-frontend-prod
     ports:
       - "80:80"
-    volumes:
-      - nginx_cache:/var/cache/nginx
     environment:
-      - API_URL=http://financesk-app:8080
+      - NODE_ENV=production
     networks:
-      - microservices-network  # Conecta à rede do backend real
+      - microservices-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    profiles:
+      - production
 
-  # ---------------------------------------------------------------------------
-  # Produção com Mock Backend
-  # ---------------------------------------------------------------------------
+  # Frontend Production (Backend Mock)
   frontend-prod-mock:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
-    container_name: finances-frontend-prod-mock
+      target: production-mock
+    container_name: financesk-frontend-prod-mock
     ports:
-      - "8080:80"  # Porta diferente para não conflitar
+      - "81:80"
     volumes:
-      - nginx_cache:/var/cache/nginx
-    environment:
-      - API_URL=http://backend-mock:8080
+      - ./mock-data:/usr/share/nginx/html/api
     networks:
-      - finances-network
-    depends_on:
-      - backend-mock
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    profiles:
-      - mock
-
-  # ---------------------------------------------------------------------------
-  # Mock Backend - JSON Server simulando API
-  # ---------------------------------------------------------------------------
-  backend-mock:
-    image: nginx:alpine
-    container_name: finances-backend-mock
-    ports:
-      - "8081:8080"
-    volumes:
-      - ./mock-backend.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - finances-network
+      - financesk-mock-network
     restart: unless-stopped
     profiles:
-      - mock
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      - production-mock
 
-# Volumes nomeados (consolidados em uma única seção)
+networks:
+  microservices-network:
+    external: true
+    name: microservices-network
+  financesk-mock-network:
+    external: true
+    name: financesk-mock-network
+
 volumes:
   node_modules:
-    driver: local
-  nginx_cache:
-    driver: local

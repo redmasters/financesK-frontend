@@ -53,9 +53,14 @@ dev:
 # Desenvolvimento com Backend Mock
 dev-mock:
 	@echo "🚀 Iniciando ambiente de desenvolvimento com BACKEND MOCK..."
+	@echo "🧹 Limpando redes conflitantes..."
+	@docker network rm finances-network 2>/dev/null || true
+	@echo "📡 Criando rede 'financesk-mock-network' se não existir..."
+	@docker network create financesk-mock-network 2>/dev/null || true
 	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock up -d frontend-dev-mock backend-mock
-	@echo "✅ Frontend disponível em: http://localhost:4201"
-	@echo "🎭 Backend mock disponível em: http://localhost:8081"
+	@echo "✅ Frontend Mock disponível em: http://localhost:4201"
+	@echo "✅ Backend Mock disponível em: http://localhost:8081"
+	@echo "🔗 Usando dados mock para desenvolvimento"
 
 dev-logs:
 	@echo "📋 Logs do ambiente de desenvolvimento (backend real):"
@@ -63,22 +68,25 @@ dev-logs:
 
 dev-mock-logs:
 	@echo "📋 Logs do ambiente de desenvolvimento (backend mock):"
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock logs -f frontend-dev-mock backend-mock
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs -f frontend-dev-mock backend-mock
 
 # Produção com Backend Real
 prod:
-	@echo "🏭 Iniciando ambiente de produção com BACKEND REAL..."
+	@echo "🚀 Iniciando ambiente de produção com BACKEND REAL..."
 	@echo "📡 Conectando à rede 'microservices-network' existente..."
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d frontend-prod
-	@echo "✅ Ambiente disponível em: http://localhost"
-	@echo "🔗 Conectado ao backend real na rede 'microservices-network'"
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile production up -d frontend-prod
+	@echo "✅ Ambiente disponível em: http://localhost:80"
 
 # Produção com Backend Mock
 prod-mock:
-	@echo "🏭 Iniciando ambiente de produção com BACKEND MOCK..."
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock up -d frontend-prod-mock backend-mock
-	@echo "✅ Frontend disponível em: http://localhost:8080"
-	@echo "🎭 Backend mock disponível em: http://localhost:8081"
+	@echo "🚀 Iniciando ambiente de produção com BACKEND MOCK..."
+	@echo "🧹 Limpando redes conflitantes..."
+	@docker network rm finances-network 2>/dev/null || true
+	@echo "📡 Criando rede 'financesk-mock-network' se não existir..."
+	@docker network create financesk-mock-network 2>/dev/null || true
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile production-mock up -d frontend-prod-mock
+	@echo "✅ Ambiente disponível em: http://localhost:81"
+	@echo "🔗 Usando dados mock para produção"
 
 prod-logs:
 	@echo "📋 Logs do ambiente de produção (backend real):"
@@ -86,17 +94,17 @@ prod-logs:
 
 prod-mock-logs:
 	@echo "📋 Logs do ambiente de produção (backend mock):"
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock logs -f frontend-prod-mock backend-mock
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs -f frontend-prod-mock
 
 # Testes
 test:
-	@echo "🧪 Executando testes automatizados..."
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile testing run --rm frontend-test
+	@echo "🧪 Executando testes..."
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) exec frontend-dev npm test
 
-# Build
+# Build das imagens
 build:
-	@echo "🔨 Fazendo build das imagens Docker..."
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build --no-cache
+	@echo "🔧 Fazendo build das imagens Docker..."
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build
 
 build-dev:
 	@echo "🔨 Build apenas para desenvolvimento..."
@@ -106,11 +114,18 @@ build-prod:
 	@echo "🔨 Build apenas para produção..."
 	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build frontend-prod frontend-prod-mock
 
-# Gerenciamento
+# Limpeza
+clean:
+	@echo "🧹 Limpando containers, imagens e volumes..."
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down -v --remove-orphans
+	@docker network rm finances-network 2>/dev/null || true
+	@docker network rm financesk-mock-network 2>/dev/null || true
+	docker system prune -f
+
+# Parar containers
 stop:
-	@echo "🛑 Parando todos os containers..."
+	@echo "⏹️  Parando todos os containers..."
 	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock down
 
 stop-dev:
 	@echo "🛑 Parando ambiente de desenvolvimento..."
@@ -128,16 +143,10 @@ stop-prod-mock:
 	@echo "🛑 Parando ambiente de produção mock..."
 	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock stop frontend-prod-mock backend-mock
 
-clean:
-	@echo "🧹 Limpando containers, imagens e volumes..."
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down -v --rmi all
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock down -v --rmi all
-	docker system prune -f
-
-restart:
+# Reiniciar
+restart: stop
 	@echo "🔄 Reiniciando ambiente..."
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) restart
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock restart
+	$(MAKE) dev
 
 restart-dev:
 	@echo "🔄 Reiniciando ambiente de desenvolvimento..."
@@ -157,17 +166,16 @@ restart-prod-mock:
 
 # Health check
 health:
-	@echo "🏥 Verificando saúde dos containers..."
-	@echo "📊 Containers ativos:"
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps
-	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile mock ps
+	@echo "🔍 Verificando saúde dos containers..."
+	@docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps
 	@echo ""
-	@echo "📊 Status detalhado:"
-	docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" | grep finances || echo "Nenhum container do FinancesK rodando"
+	@echo "🌐 Testando endpoints..."
+	@curl -s http://localhost:4200 > /dev/null && echo "✅ Frontend Dev: OK" || echo "❌ Frontend Dev: FALHOU"
+	@curl -s http://localhost:4201 > /dev/null && echo "✅ Frontend Mock: OK" || echo "❌ Frontend Mock: FALHOU"
+	@curl -s http://localhost:8081/health > /dev/null && echo "✅ Backend Mock: OK" || echo "❌ Backend Mock: FALHOU"
 
-# Shell access
+# Shell no container de desenvolvimento
 shell-dev:
-	@echo "🐚 Acessando shell do container de desenvolvimento..."
 	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) exec frontend-dev sh
 
 shell-dev-mock:
