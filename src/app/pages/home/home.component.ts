@@ -1,4 +1,4 @@
-import {Component, inject, ViewChild} from '@angular/core';
+import {Component, HostListener, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {BalanceService} from '../../core/services/balance.service';
@@ -7,6 +7,7 @@ import {TransactionService} from '../../core/services/transaction.service';
 import {TransactionApiService} from '../../core/services/transaction-api.service';
 import {CategoryService} from '../../core/services/category.service';
 import {NotificationService} from '../../core/services/notification.service';
+import {AccountService} from '../../core/services/account.service';
 import {BrazilianDateInputDirective} from '../../shared/directives/brazilian-date-input.directive';
 import {
   PaymentStatus,
@@ -16,6 +17,7 @@ import {
   SortDirection,
   SortField
 } from '../../core/models/transaction.model';
+import {Account, AccountType} from '../../core/models/account.model';
 import {TransactionModalComponent} from '../../shared/components/transaction-modal/transaction-modal.component';
 import {CategoryModalComponent} from '../../shared/components/category-modal/category-modal.component';
 import {
@@ -35,6 +37,7 @@ export class HomeComponent {
   private transactionApiService = inject(TransactionApiService);
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
+  private accountService = inject(AccountService);
 
   // Referência aos modais
   @ViewChild(TransactionModalComponent) transactionModal!: TransactionModalComponent;
@@ -44,12 +47,19 @@ export class HomeComponent {
   // Enums para uso no template
   PaymentStatus = PaymentStatus;
   TransactionType = TransactionType;
-// Filtros do usuário
+  AccountType = AccountType;
+
+  // Filtros do usuário
   selectedStatus: PaymentStatus | 'ALL' = 'ALL';
   startDate: string = '';
   endDate: string = '';
   userId: number = 1;
   accountsId: number[] = [1]; // IDs de contas do usuário, pode ser dinâmico
+
+  // Seletor de contas
+  selectedAccountIds: number[] = []; // Contas selecionadas para filtrar transações
+  showAccountSelector: boolean = false; // Controla a visibilidade do seletor
+  allAccountsSelected: boolean = true; // Indica se todas as contas estão selecionadas
 
   // Propriedades para lista de transações
   selectedTransactionType: TransactionType | '' = '';
@@ -72,6 +82,9 @@ export class HomeComponent {
   constructor() {
     // Inicializa as datas com o mês atual
     this.initializeCurrentMonthDates();
+
+    // Carrega contas do usuário
+    this.loadUserAccounts();
 
     // Carrega dados iniciais
     this.updateFinancialData();
@@ -418,5 +431,147 @@ export class HomeComponent {
         }
       });
     }
+  }
+
+  /**
+   * Carrega as contas do usuário
+   */
+  private loadUserAccounts(): void {
+    this.accountService.loadAccounts(this.userId);
+  }
+
+  /**
+   * Getter para acessar as contas do AccountService
+   */
+  get accounts(): Account[] {
+    return this.accountService.accounts();
+  }
+
+  /**
+   * Getter para verificar se está carregando contas
+   */
+  get isLoadingAccounts(): boolean {
+    return this.accountService.isLoading();
+  }
+
+  /**
+   * Retorna as contas selecionadas
+   */
+  getSelectedAccounts(): Account[] {
+    if (this.allAccountsSelected) {
+      return this.accounts;
+    }
+    return this.accounts.filter(account => this.selectedAccountIds.includes(account.accountId));
+  }
+
+  /**
+   * Retorna o label das contas selecionadas
+   */
+  getSelectedAccountsLabel(): string {
+    if (this.allAccountsSelected) {
+      return `Todas as contas (${this.accounts.length})`;
+    }
+
+    const selectedAccounts = this.getSelectedAccounts();
+    if (selectedAccounts.length === 0) {
+      return 'Nenhuma conta selecionada';
+    }
+    if (selectedAccounts.length === 1) {
+      return selectedAccounts[0].accountName;
+    }
+    return `${selectedAccounts.length} contas selecionadas`;
+  }
+
+  /**
+   * Alterna a visibilidade do seletor de contas
+   */
+  toggleAccountSelector(): void {
+    this.showAccountSelector = !this.showAccountSelector;
+  }
+
+  /**
+   * Seleciona/deseleciona todas as contas
+   */
+  toggleAllAccounts(): void {
+    this.allAccountsSelected = !this.allAccountsSelected;
+    if (this.allAccountsSelected) {
+      this.selectedAccountIds = [];
+    } else {
+      this.selectedAccountIds = this.accounts.map(account => account.accountId);
+    }
+    // Futuramente aqui será chamado updateFinancialData() quando integrar com backend
+  }
+
+  /**
+   * Alterna a seleção de uma conta específica
+   */
+  toggleAccountSelection(accountId: number): void {
+    const index = this.selectedAccountIds.indexOf(accountId);
+    if (index > -1) {
+      this.selectedAccountIds.splice(index, 1);
+    } else {
+      this.selectedAccountIds.push(accountId);
+    }
+
+    // Atualiza o estado "todas selecionadas"
+    this.allAccountsSelected = this.selectedAccountIds.length === 0;
+
+    // Futuramente aqui será chamado updateFinancialData() quando integrar com backend
+  }
+
+  /**
+   * Verifica se uma conta está selecionada
+   */
+  isAccountSelected(accountId: number): boolean {
+    if (this.allAccountsSelected) {
+      return true;
+    }
+    return this.selectedAccountIds.includes(accountId);
+  }
+
+  /**
+   * Retorna a classe CSS para o tipo de conta
+   */
+  getAccountTypeClass(accountType: AccountType): string {
+    const typeMap = {
+      [AccountType.CONTA_CORRENTE]: 'account-type-corrente',
+      [AccountType.CARTEIRA]: 'account-type-carteira',
+      [AccountType.CARTAO_CREDITO]: 'account-type-credito',
+      [AccountType.POUPANCA]: 'account-type-poupanca'
+    };
+    return typeMap[accountType] || '';
+  }
+
+  /**
+   * Retorna o ícone para o tipo de conta
+   */
+  getAccountTypeIcon(accountType: AccountType): string {
+    const iconMap = {
+      [AccountType.CONTA_CORRENTE]: 'fas fa-university',
+      [AccountType.CARTEIRA]: 'fas fa-wallet',
+      [AccountType.CARTAO_CREDITO]: 'fas fa-credit-card',
+      [AccountType.POUPANCA]: 'fas fa-piggy-bank'
+    };
+    return iconMap[accountType] || 'fas fa-university';
+  }
+
+  /**
+   * Fecha o seletor de contas quando clica fora
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    const accountSelector = target.closest('.account-selector-container');
+
+    if (!accountSelector && this.showAccountSelector) {
+      this.closeAccountSelector();
+    }
+  }
+
+  /**
+   * Fecha o seletor de contas
+   */
+  closeAccountSelector(): void {
+    this.showAccountSelector = false;
   }
 }
