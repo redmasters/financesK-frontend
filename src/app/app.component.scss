@@ -82,6 +82,7 @@
   margin-top: auto;
   border-top: 1px solid rgba(255,255,255,0.05);
   padding-top: 1rem;
+  position: relative; /* Necessário para o posicionamento absoluto do card */
 }
 
 .user-profile {
