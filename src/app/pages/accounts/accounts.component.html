@@ -196,7 +196,38 @@
         </div>
 
         <div class="account-details">
-          <div class="balance">
+          <!-- Para cartões de crédito: mostrar limite ao invés de saldo -->
+          <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-limit-info">
+            <div class="credit-header">
+              <span class="credit-label">Limite Disponível:</span>
+              <span class="credit-available">{{ formatCreditAvailable(account) }}</span>
+            </div>
+
+            <div class="credit-total">
+              <span class="credit-total-label">Limite Total:</span>
+              <span class="credit-total-value">{{ account.accountCreditLimitFormatted }}</span>
+            </div>
+
+            <!-- Barra de progresso do uso do limite -->
+            <div class="credit-usage-bar">
+              <div class="usage-info">
+                <span class="usage-label">Uso do limite</span>
+                <span class="usage-percentage">{{ getCreditUsagePercentage(account).toFixed(1) }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill"
+                     [class]="'progress-' + getCreditUsageClass(account)"
+                     [style.width.%]="getCreditUsagePercentage(account)">
+                </div>
+              </div>
+              <div class="usage-amount">
+                <span class="used-amount">Usado: {{ account.accountCurrentBalanceFormatted }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Para outras contas: mostrar saldo normal -->
+          <div *ngIf="account.accountType !== AccountType.CARTAO_CREDITO" class="balance">
             <span class="balance-label">Saldo Atual:</span>
             <span class="balance-value" [class.negative]="account.accountCurrentBalance < 0">
               {{ account.accountCurrentBalanceFormatted }}
@@ -209,10 +240,6 @@
           </div>
 
           <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-info">
-            <div *ngIf="account.accountCreditLimit" class="credit-limit">
-              <span class="label">Limite:</span>
-              <span class="value">{{ account.accountCreditLimitFormatted }}</span>
-            </div>
             <div class="credit-dates">
               <span *ngIf="account.accountStatementClosingDate" class="closing-date">
                 Fechamento: {{ account.accountStatementClosingDate }}
@@ -221,11 +248,6 @@
                 Vencimento: {{ account.accountPaymentDueDate }}
               </span>
             </div>
-          </div>
-
-          <div *ngIf="account.bankInstitutionName" class="bank-info">
-            <span class="label">Instituição:</span>
-            <span class="value">{{ account.bankInstitutionName }}</span>
           </div>
         </div>
       </div>

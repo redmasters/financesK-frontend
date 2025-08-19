@@ -190,4 +190,38 @@ export class AccountsComponent implements OnInit {
   get bankInstitutions() {
     return this.bankInstitutionService.bankInstitutions;
   }
+
+  // Métodos para cartão de crédito
+  getCreditUsagePercentage(account: Account): number {
+    if (!account.accountCreditLimit || account.accountCreditLimit === 0) {
+      return 0;
+    }
+    // Para cartão de crédito, o saldo negativo representa o valor usado
+    const usedAmount = Math.abs(account.accountCurrentBalance);
+    return Math.min((usedAmount / account.accountCreditLimit) * 100, 100);
+  }
+
+  getCreditAvailable(account: Account): number {
+    if (!account.accountCreditLimit) {
+      return 0;
+    }
+    // Limite disponível = limite total - valor usado (saldo negativo)
+    const usedAmount = Math.abs(account.accountCurrentBalance);
+    return Math.max(account.accountCreditLimit - usedAmount, 0);
+  }
+
+  formatCreditAvailable(account: Account): string {
+    const available = this.getCreditAvailable(account);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(available);
+  }
+
+  getCreditUsageClass(account: Account): string {
+    const percentage = this.getCreditUsagePercentage(account);
+    if (percentage >= 90) return 'danger';
+    if (percentage >= 70) return 'warning';
+    return 'success';
+  }
 }
