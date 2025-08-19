@@ -1,12 +1,14 @@
-import {Component, inject, ViewChild} from '@angular/core';
+import {Component, HostListener, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
 import {BalanceService} from '../../core/services/balance.service';
 import {FinancialData} from '../../core/models/transaction.model';
 import {TransactionService} from '../../core/services/transaction.service';
 import {TransactionApiService} from '../../core/services/transaction-api.service';
 import {CategoryService} from '../../core/services/category.service';
 import {NotificationService} from '../../core/services/notification.service';
+import {AccountService} from '../../core/services/account.service';
 import {BrazilianDateInputDirective} from '../../shared/directives/brazilian-date-input.directive';
 import {
   PaymentStatus,
@@ -16,6 +18,7 @@ import {
   SortDirection,
   SortField
 } from '../../core/models/transaction.model';
+import {Account, AccountType} from '../../core/models/account.model';
 import {TransactionModalComponent} from '../../shared/components/transaction-modal/transaction-modal.component';
 import {CategoryModalComponent} from '../../shared/components/category-modal/category-modal.component';
 import {
@@ -35,6 +38,8 @@ export class HomeComponent {
   private transactionApiService = inject(TransactionApiService);
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
+  private accountService = inject(AccountService);
+  private router = inject(Router);
 
   // Referência aos modais
   @ViewChild(TransactionModalComponent) transactionModal!: TransactionModalComponent;
@@ -44,12 +49,19 @@ export class HomeComponent {
   // Enums para uso no template
   PaymentStatus = PaymentStatus;
   TransactionType = TransactionType;
-// Filtros do usuário
+  AccountType = AccountType;
+
+  // Filtros do usuário
   selectedStatus: PaymentStatus | 'ALL' = 'ALL';
   startDate: string = '';
   endDate: string = '';
   userId: number = 1;
   accountsId: number[] = [1]; // IDs de contas do usuário, pode ser dinâmico
+
+  // Seletor de contas
+  selectedAccountIds: number[] = []; // Contas selecionadas para filtrar transações
+  showAccountSelector: boolean = false; // Controla a visibilidade do seletor
+  allAccountsSelected: boolean = true; // Indica se todas as contas estão selecionadas
 
   // Propriedades para lista de transações
   selectedTransactionType: TransactionType | '' = '';
@@ -73,11 +85,49 @@ export class HomeComponent {
     // Inicializa as datas com o mês atual
     this.initializeCurrentMonthDates();
 
-    // Carrega dados iniciais
-    this.updateFinancialData();
+    // Carrega contas do usuário e aguarda para carregar transações
+    this.loadUserAccountsAndData();
 
     // Carrega categorias para uso nos modais de transação
     this.categoryService.getAllCategories().subscribe();
+  }
+
+  /**
+   * Carrega as contas do usuário e depois carrega os dados financeiros
+   */
+  private loadUserAccountsAndData(): void {
+    this.accountService.loadAccounts(this.userId);
+
+    // Como o AccountService usa signals, vamos usar effect() para reagir às mudanças
+    const checkAccountsLoaded = () => {
+      const accounts = this.accountService.accounts();
+      if (accounts.length > 0) {
+        // Contas foram carregadas, agora pode buscar transações
+        this.updateFinancialData();
+        return true; // Indica que o efeito pode parar
+      }
+      return false;
+    };
+
+    // Verifica imediatamente se as contas já estão carregadas
+    if (!checkAccountsLoaded()) {
+      // Se não estão carregadas, cria um intervalo para verificar periodicamente
+      const intervalId = setInterval(() => {
+        if (checkAccountsLoaded()) {
+          clearInterval(intervalId);
+        }
+      }, 100); // Verifica a cada 100ms
+
+      // Timeout de segurança para evitar loop infinito
+      setTimeout(() => {
+        clearInterval(intervalId);
+        // Se após 5 segundos ainda não carregou, tenta carregar mesmo assim
+        if (this.accountService.accounts().length === 0) {
+          console.warn('Timeout ao aguardar carregamento de contas, carregando transações sem filtro de conta');
+          this.updateFinancialData();
+        }
+      }, 5000);
+    }
   }
 
   // Getters para acessar os signals do serviço
@@ -125,9 +175,12 @@ export class HomeComponent {
    * Carrega a lista de transações com base nos filtros
    */
   loadTransactions(): void {
+    // Prepara os IDs das contas selecionadas
+    const selectedAccountIds = this.getSelectedAccountIds();
+
     const params: TransactionSearchParams = {
       userId: this.userId,
-      accountsId: this.accountsId,
+      accountsId: selectedAccountIds.length > 0 ? selectedAccountIds : undefined,
       startDate: this.startDate,
       endDate: this.endDate,
       page: this.currentPage,
@@ -393,5 +446,218 @@ export class HomeComponent {
         }
       });
     }
+  }
+
+  /**
+   * Edita transação diretamente da lista
+   */
+  editTransaction(transaction: Transaction): void {
+    this.transactionModal.openForEdit(transaction);
+  }
+
+  /**
+   * Confirma e deleta transação diretamente da lista
+   */
+  confirmDeleteTransaction(transaction: Transaction): void {
+    if (confirm(`Tem certeza que deseja excluir a transação "${transaction.description}"?`)) {
+      this.transactionApiService.deleteTransaction(transaction.id).subscribe({
+        next: () => {
+          this.updateFinancialData();
+          this.notificationService.success('Transação excluída com sucesso!');
+        },
+        error: (error) => {
+          console.error('Erro ao excluir transação:', error);
+          this.notificationService.error('Erro ao excluir transação');
+        }
+      });
+    }
+  }
+
+  /**
+   * Carrega as contas do usuário
+   */
+  private loadUserAccounts(): void {
+    this.accountService.loadAccounts(this.userId);
+  }
+
+  /**
+   * Getter para acessar as contas do AccountService
+   */
+  get accounts(): Account[] {
+    return this.accountService.accounts();
+  }
+
+  /**
+   * Getter para verificar se está carregando contas
+   */
+  get isLoadingAccounts(): boolean {
+    return this.accountService.isLoading();
+  }
+
+  /**
+   * Retorna as contas selecionadas
+   */
+  getSelectedAccounts(): Account[] {
+    if (this.allAccountsSelected) {
+      return this.accounts;
+    }
+    return this.accounts.filter(account => this.selectedAccountIds.includes(account.accountId));
+  }
+
+  /**
+   * Retorna o label das contas selecionadas
+   */
+  getSelectedAccountsLabel(): string {
+    if (this.allAccountsSelected) {
+      return `Todas as contas (${this.accounts.length})`;
+    }
+
+    const selectedAccounts = this.getSelectedAccounts();
+    if (selectedAccounts.length === 0) {
+      return 'Nenhuma conta selecionada';
+    }
+    if (selectedAccounts.length === 1) {
+      return selectedAccounts[0].accountName;
+    }
+    return `${selectedAccounts.length} contas selecionadas`;
+  }
+
+  /**
+   * Alterna a visibilidade do seletor de contas
+   */
+  toggleAccountSelector(): void {
+    this.showAccountSelector = !this.showAccountSelector;
+  }
+
+  /**
+   * Seleciona/deseleciona todas as contas
+   */
+  toggleAllAccounts(): void {
+    this.allAccountsSelected = !this.allAccountsSelected;
+
+    if (this.allAccountsSelected) {
+      // Quando "todas as contas" está marcado, limpa a seleção individual
+      this.selectedAccountIds = [];
+    } else {
+      // Quando "todas as contas" é desmarcado, marca todas individualmente
+      this.selectedAccountIds = this.accounts.map(account => account.accountId);
+    }
+
+    // Reset pagination and update data when account selection changes
+    this.currentPage = 0;
+    this.updateFinancialData();
+  }
+
+  /**
+   * Alterna a seleção de uma conta específica
+   */
+  toggleAccountSelection(accountId: number): void {
+    // Se "todas as contas" estiver marcado, desmarca e prepara para seleção individual
+    if (this.allAccountsSelected) {
+      this.allAccountsSelected = false;
+      // Marca todas as contas exceto a que foi desmarcada
+      this.selectedAccountIds = this.accounts
+        .map(account => account.accountId)
+        .filter(id => id !== accountId);
+    } else {
+      // Lógica normal de marcar/desmarcar conta individual
+      const index = this.selectedAccountIds.indexOf(accountId);
+      if (index > -1) {
+        this.selectedAccountIds.splice(index, 1);
+      } else {
+        this.selectedAccountIds.push(accountId);
+      }
+
+      // Verifica se todas as contas estão selecionadas para ativar "todas as contas"
+      if (this.selectedAccountIds.length === this.accounts.length) {
+        this.allAccountsSelected = true;
+        this.selectedAccountIds = [];
+      }
+    }
+
+    // Reset pagination and update data when account selection changes
+    this.currentPage = 0;
+    this.updateFinancialData();
+  }
+
+  /**
+   * Verifica se uma conta está selecionada
+   */
+  isAccountSelected(accountId: number): boolean {
+    if (this.allAccountsSelected) {
+      return true;
+    }
+    return this.selectedAccountIds.includes(accountId);
+  }
+
+  /**
+   * Retorna a classe CSS para o tipo de conta
+   */
+  getAccountTypeClass(accountType: AccountType): string {
+    const typeMap = {
+      [AccountType.CONTA_CORRENTE]: 'account-type-corrente',
+      [AccountType.CARTEIRA]: 'account-type-carteira',
+      [AccountType.CARTAO_CREDITO]: 'account-type-credito',
+      [AccountType.POUPANCA]: 'account-type-poupanca'
+    };
+    return typeMap[accountType] || '';
+  }
+
+  /**
+   * Retorna o ícone para o tipo de conta
+   */
+  getAccountTypeIcon(accountType: AccountType): string {
+    const iconMap = {
+      [AccountType.CONTA_CORRENTE]: 'fas fa-university',
+      [AccountType.CARTEIRA]: 'fas fa-wallet',
+      [AccountType.CARTAO_CREDITO]: 'fas fa-credit-card',
+      [AccountType.POUPANCA]: 'fas fa-piggy-bank'
+    };
+    return iconMap[accountType] || 'fas fa-university';
+  }
+
+  /**
+   * Fecha o seletor de contas quando clica fora
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    const accountSelector = target.closest('.account-selector-container');
+
+    if (!accountSelector && this.showAccountSelector) {
+      this.closeAccountSelector();
+    }
+  }
+
+  /**
+   * Fecha o seletor de contas
+   */
+  closeAccountSelector(): void {
+    this.showAccountSelector = false;
+  }
+
+  /**
+   * Navega para a página home ou recarrega dados se já estiver na home
+   */
+  navigateToHome(): void {
+    // Se já estamos na home, apenas recarrega os dados
+    if (this.router.url === '/home') {
+      this.resetToCurrentMonth();
+    } else {
+      this.router.navigate(['/home']);
+    }
+  }
+
+  /**
+   * Retorna os IDs das contas selecionadas para enviar ao backend
+   */
+  getSelectedAccountIds(): number[] {
+    if (this.allAccountsSelected) {
+      return this.accounts.map(account => account.accountId);
+    }
+
+    // Se nenhuma conta individual está selecionada, retorna array vazio
+    // Isso fará com que o backend retorne dados vazios, que é o comportamento correto
+    return this.selectedAccountIds.length > 0 ? this.selectedAccountIds : [];
   }
 }

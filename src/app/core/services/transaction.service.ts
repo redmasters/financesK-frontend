@@ -79,6 +79,9 @@ export class TransactionService {
       sortDirection: params.sortDirection || 'DESC'
     };
     // Adiciona parâmetros opcionais apenas se definidos
+    if (params.accountsId && params.accountsId.length > 0) {
+      (apiParams as any).accountsId = params.accountsId;
+    }
     if (params.type) {
       (apiParams as any).type = params.type;
     }

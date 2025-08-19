@@ -3,7 +3,7 @@
   <!-- Header -->
   <div class="page-header">
     <div class="header-left">
-      <h1 class="page-title">Controle Financeiro</h1>
+      <h1 class="page-title clickable-title" (click)="navigateToHome()">Controle Financeiro</h1>
       <p class="page-subtitle">Gerencie suas finanças de forma inteligente</p>
     </div>
     <div class="header-right">
@@ -104,6 +104,67 @@
           </select>
         </div>
 
+        <!-- Seletor de Contas -->
+        <div class="filter-item account-selector-container">
+          <label><i class="fas fa-university"></i> Contas:</label>
+          <div class="account-selector-wrapper">
+            <button type="button"
+                    class="account-selector-button"
+                    (click)="toggleAccountSelector()"
+                    [class.active]="showAccountSelector">
+              <span class="selector-text">{{ getSelectedAccountsLabel() }}</span>
+              <i class="fas fa-chevron-down" [class.rotated]="showAccountSelector"></i>
+            </button>
+
+            <!-- Dropdown de Contas -->
+            <div class="account-dropdown" *ngIf="showAccountSelector" (click)="$event.stopPropagation()">
+              <div class="dropdown-header">
+                <label class="account-option">
+                  <input type="checkbox"
+                         [checked]="allAccountsSelected"
+                         (change)="toggleAllAccounts()"
+                         class="account-checkbox">
+                  <span class="account-name">
+                    <i class="fas fa-check-double"></i>
+                    Todas as contas
+                  </span>
+                </label>
+              </div>
+
+              <div class="dropdown-separator"></div>
+
+              <div class="accounts-list" *ngIf="!isLoadingAccounts">
+                <label class="account-option" *ngFor="let account of accounts">
+                  <input type="checkbox"
+                         [checked]="isAccountSelected(account.accountId)"
+                         (change)="toggleAccountSelection(account.accountId)"
+                         class="account-checkbox">
+                  <span class="account-info">
+                    <i [class]="getAccountTypeIcon(account.accountType)"></i>
+                    <span class="account-details">
+                      <span class="account-name">{{ account.accountName }}</span>
+                      <span class="account-type">{{ account.accountType }}</span>
+                      <span class="account-balance"
+                            *ngIf="account.accountType !== AccountType.CARTAO_CREDITO">
+                        {{ account.accountCurrentBalanceFormatted }}
+                      </span>
+                      <span class="account-limit"
+                            *ngIf="account.accountType === AccountType.CARTAO_CREDITO">
+                        Limite: {{ account.accountCreditLimitFormatted }}
+                      </span>
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              <div class="loading-accounts" *ngIf="isLoadingAccounts">
+                <i class="fas fa-spinner fa-spin"></i>
+                Carregando contas...
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Segunda linha - Filtros de data -->
         <div class="filter-item">
           <label><i class="fas fa-calendar-alt"></i> Data Inicial:</label>
@@ -174,6 +235,11 @@
             <span class="summary-label">Período:</span>
             <span class="summary-value">{{ formatDateRange() }}</span>
           </div>
+          <div class="summary-item">
+            <i class="fas fa-university"></i>
+            <span class="summary-label">Contas:</span>
+            <span class="summary-value">{{ getSelectedAccountsLabel() }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -216,6 +282,7 @@
             <th><i class="fas fa-info"></i> Tipo</th>
             <th><i class="fas fa-calendar"></i> Vencimento</th>
             <th><i class="fas fa-check-circle"></i> Status</th>
+            <th><i class="fas fa-cog"></i> Ações</th>
           </tr>
           </thead>
           <tbody>
@@ -264,6 +331,16 @@
                 <span class="status-text" [class]="'status-' + transaction.status.toLowerCase()">
                   {{ getStatusLabel(transaction.status) }}
                 </span>
+            </td>
+
+            <!-- Ações -->
+            <td class="actions-cell">
+              <button class="btn-action btn-edit" (click)="editTransaction(transaction)">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-action btn-delete" (click)="confirmDeleteTransaction(transaction)">
+                <i class="fas fa-trash"></i>
+              </button>
             </td>
           </tr>
           </tbody>

@@ -1,6 +1,5 @@
 import { Directive, ElementRef, HostListener, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { CurrencyService } from '../../core/services/currency.service';
 
 @Directive({
   selector: '[appCurrencyInput]',
@@ -18,10 +17,7 @@ export class CurrencyInputDirective implements ControlValueAccessor {
   private onTouched = () => {};
   private lastValue = '';
 
-  constructor(
-    private el: ElementRef,
-    private currencyService: CurrencyService
-  ) {}
+  constructor(private el: ElementRef) {}
 
   @HostListener('input', ['$event'])
   onInput(event: any): void {
@@ -72,8 +68,9 @@ export class CurrencyInputDirective implements ControlValueAccessor {
 
   writeValue(value: any): void {
     if (value !== null && value !== undefined && value > 0) {
-      // Os valores do backend já vêm em reais
-      const formattedValue = value.toLocaleString('pt-BR', {
+      // Os valores do backend vêm em centavos, precisamos converter para reais para exibição
+      const reaisValue = value / 100;
+      const formattedValue = reaisValue.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
