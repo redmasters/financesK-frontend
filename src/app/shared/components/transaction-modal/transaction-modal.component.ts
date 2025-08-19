@@ -141,8 +141,8 @@ export class TransactionModalComponent {
     // Preenche o formulário de edição com os dados da transação
     this.updateForm = {
       description: transaction.description,
-      amount: transaction.amount,
-      downPayment: transaction.downPayment|| 0,
+      amount: transaction.amount * 100, // Converter reais para centavos
+      downPayment: (transaction.downPayment || 0) * 100, // Converter reais para centavos
       type: transaction.type,
       operationType: transaction.operationType,
       status: transaction.status,

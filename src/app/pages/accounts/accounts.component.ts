@@ -81,11 +81,11 @@ export class AccountsComponent implements OnInit {
     this.accountForm.patchValue({
       accountName: account.accountName,
       accountDescription: account.accountDescription || '',
-      accountCurrentBalance: account.accountCurrentBalance, // Agora já vem formatado corretamente
+      accountCurrentBalance: account.accountCurrentBalance * 100, // Converter reais para centavos
       accountCurrency: account.accountCurrency,
       bankInstitutionId: null, // Não temos mais o ID, apenas o nome
       accountType: account.accountType,
-      accountCreditLimit: account.accountCreditLimit || null,
+      accountCreditLimit: account.accountCreditLimit ? account.accountCreditLimit * 100 : null, // Converter reais para centavos
       accountStatementClosingDate: account.accountStatementClosingDate,
       accountPaymentDueDate: account.accountPaymentDueDate
     });
