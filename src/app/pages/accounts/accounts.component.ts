@@ -5,11 +5,12 @@ import { AccountService } from '../../core/services/account.service';
 import { BankInstitutionService } from '../../core/services/bank-institution.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Account, AccountType, CreateAccountRequest } from '../../core/models/account.model';
+import { CurrencyInputDirective } from '../../shared/directives/currency-input.directive';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputDirective],
   templateUrl: './accounts.component.html',
   styleUrls: ['./accounts.component.scss']
 })
@@ -97,11 +98,11 @@ export class AccountsComponent implements OnInit {
       const accountData: CreateAccountRequest = {
         accountName: formValue.accountName,
         accountDescription: formValue.accountDescription || undefined,
-        accountCurrentBalance: formValue.accountCurrentBalance * 100, // Converter para centavos
+        accountCurrentBalance: formValue.accountCurrentBalance, // A diretiva já envia em centavos
         accountCurrency: formValue.accountCurrency,
         bankInstitutionId: formValue.bankInstitutionId || undefined,
         accountType: formValue.accountType,
-        accountCreditLimit: formValue.accountCreditLimit ? formValue.accountCreditLimit * 100 : undefined,
+        accountCreditLimit: formValue.accountCreditLimit || undefined, // A diretiva já envia em centavos
         accountStatementClosingDate: formValue.accountStatementClosingDate || undefined,
         accountPaymentDueDate: formValue.accountPaymentDueDate || undefined,
         userId: 1

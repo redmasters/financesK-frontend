@@ -80,17 +80,13 @@
         <div class="form-row">
           <div class="form-group">
             <label for="accountCurrentBalance">Saldo Atual</label>
-            <div class="currency-input-container">
-              <span class="currency-symbol">R$</span>
-              <input
-                type="number"
-                id="accountCurrentBalance"
-                formControlName="accountCurrentBalance"
-                class="form-control currency-input"
-                placeholder="0,00"
-                step="0.01"
-                min="0">
-            </div>
+            <input
+              type="text"
+              id="accountCurrentBalance"
+              formControlName="accountCurrentBalance"
+              class="form-control"
+              appCurrencyInput
+              placeholder="0,00">
           </div>
 
           <div class="form-group">
@@ -111,17 +107,13 @@
           <div class="form-row">
             <div class="form-group">
               <label for="accountCreditLimit">Limite de Crédito</label>
-              <div class="currency-input-container">
-                <span class="currency-symbol">R$</span>
-                <input
-                  type="number"
-                  id="accountCreditLimit"
-                  formControlName="accountCreditLimit"
-                  class="form-control currency-input"
-                  placeholder="0,00"
-                  step="0.01"
-                  min="0">
-              </div>
+              <input
+                type="text"
+                id="accountCreditLimit"
+                formControlName="accountCreditLimit"
+                class="form-control"
+                appCurrencyInput
+                placeholder="0,00">
             </div>
           </div>
 
