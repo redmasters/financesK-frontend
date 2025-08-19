@@ -141,8 +141,8 @@ export class TransactionModalComponent {
     // Preenche o formulário de edição com os dados da transação
     this.updateForm = {
       description: transaction.description,
-      amount: transaction.amount * 100, // Converter reais para centavos
-      downPayment: (transaction.downPayment || 0) * 100, // Converter reais para centavos
+      amount: this.currencyService.reaisToCents(transaction.amount), // Usar método com arredondamento
+      downPayment: this.currencyService.reaisToCents(transaction.downPayment || 0), // Usar método com arredondamento
       type: transaction.type,
       operationType: transaction.operationType,
       status: transaction.status,
@@ -197,7 +197,7 @@ export class TransactionModalComponent {
 
     this.transactionService.updateTransaction(this.editingTransactionId, this.updateForm).subscribe({
       next: () => {
-        this.notificationService.success('Transação atualizada com sucesso!');
+        // Removida notificação duplicada - será exibida pelo componente home
         this.transactionUpdated.emit();
         this.close();
       },
@@ -223,7 +223,7 @@ export class TransactionModalComponent {
         this.isLoading.set(false);
         this.close();
         this.transactionCreated.emit();
-        this.notificationService.showSuccess('Transação criada com sucesso!');
+        // Removida notificação duplicada - será exibida pelo componente home
       },
       error: (error) => {
         console.error('Erro ao criar transação:', error);

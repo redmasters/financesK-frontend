@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AccountService } from '../../core/services/account.service';
 import { BankInstitutionService } from '../../core/services/bank-institution.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { CurrencyService } from '../../core/services/currency.service';
 import { Account, AccountType, CreateAccountRequest } from '../../core/models/account.model';
 import { CurrencyInputDirective } from '../../shared/directives/currency-input.directive';
 
@@ -18,6 +19,7 @@ export class AccountsComponent implements OnInit {
   accountForm: FormGroup;
   isFormVisible = signal<boolean>(false);
   editingAccount = signal<Account | null>(null);
+  Math = Math;
 
   readonly AccountType = AccountType;
   readonly accountTypes = [
@@ -31,7 +33,8 @@ export class AccountsComponent implements OnInit {
     private fb: FormBuilder,
     public accountService: AccountService,
     private notificationService: NotificationService,
-    private bankInstitutionService: BankInstitutionService
+    private bankInstitutionService: BankInstitutionService,
+    private currencyService: CurrencyService
   ) {
     this.accountForm = this.createForm();
   }
@@ -81,11 +84,11 @@ export class AccountsComponent implements OnInit {
     this.accountForm.patchValue({
       accountName: account.accountName,
       accountDescription: account.accountDescription || '',
-      accountCurrentBalance: account.accountCurrentBalance * 100, // Converter reais para centavos
+      accountCurrentBalance: this.currencyService.reaisToCents(account.accountCurrentBalance), // Usar método com arredondamento
       accountCurrency: account.accountCurrency,
       bankInstitutionId: null, // Não temos mais o ID, apenas o nome
       accountType: account.accountType,
-      accountCreditLimit: account.accountCreditLimit ? account.accountCreditLimit * 100 : null, // Converter reais para centavos
+      accountCreditLimit: account.accountCreditLimit ? this.currencyService.reaisToCents(account.accountCreditLimit) : null, // Usar método com arredondamento
       accountStatementClosingDate: account.accountStatementClosingDate,
       accountPaymentDueDate: account.accountPaymentDueDate
     });
