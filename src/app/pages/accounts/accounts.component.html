@@ -176,83 +176,123 @@
       </button>
     </div>
 
-    <div class="accounts-grid" *ngIf="!accountService.isLoading() && accountService.accounts().length > 0">
-      <div *ngFor="let account of accountService.accounts()" class="account-card">
-        <div class="account-header">
-          <div class="account-info">
-            <h3>{{ account.accountName }}</h3>
-            <span class="account-type-badge" [class]="'badge-' + account.accountType.toLowerCase().replace('_', '-')">
-              {{ getAccountTypeLabel(account.accountType) }}
-            </span>
+    <!-- Lista Agrupada por Banco -->
+    <div class="accounts-grouped" *ngIf="!accountService.isLoading() && accountService.accounts().length > 0">
+      <div *ngFor="let bankName of getBankNames()" class="bank-group">
+
+        <!-- Cabeçalho do Grupo de Banco (quando há múltiplas contas) -->
+        <div *ngIf="shouldShowAsGroup(bankName)"
+             class="bank-group-header"
+             (click)="toggleBankExpansion(bankName)">
+          <div class="bank-group-info">
+            <div class="bank-name-group">
+              <i class="fas fa-university bank-icon"></i>
+              <h3>{{ bankName }}</h3>
+              <span class="accounts-count">{{ getAccountsByBank(bankName).length }} contas</span>
+            </div>
+            <div class="bank-summary">
+              <div class="account-types">
+                <span *ngFor="let type of getBankAccountTypesSummary(bankName)" class="type-chip">
+                  {{ type }}
+                </span>
+              </div>
+              <div class="total-balance">
+                <span class="balance-label">Total:</span>
+                <span class="balance-value">{{ formatBankTotalBalance(bankName) }}</span>
+              </div>
+            </div>
           </div>
-          <div class="account-actions">
-            <button type="button" class="btn-icon" (click)="editAccount(account)" title="Editar">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button type="button" class="btn-icon btn-danger" (click)="deleteAccount(account)" title="Excluir">
-              <i class="fas fa-trash"></i>
-            </button>
+          <div class="expand-icon">
+            <i class="fas" [class.fa-chevron-down]="!isBankExpanded(bankName)"
+               [class.fa-chevron-up]="isBankExpanded(bankName)"></i>
           </div>
         </div>
 
-        <div class="account-details">
-          <!-- Para cartões de crédito: mostrar limite ao invés de saldo -->
-          <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-limit-info">
-            <div class="credit-header">
-              <span class="credit-label">Limite Disponível:</span>
-              <span class="credit-available">{{ formatCreditAvailable(account) }}</span>
-            </div>
+        <!-- Contas do Banco -->
+        <div class="bank-accounts"
+             [class.expanded]="isBankExpanded(bankName) || !shouldShowAsGroup(bankName)"
+             [class.single-account]="!shouldShowAsGroup(bankName)">
 
-            <div class="credit-total">
-              <span class="credit-total-label">Limite Total:</span>
-              <span class="credit-total-value">{{ account.accountCreditLimitFormatted }}</span>
-            </div>
-
-            <!-- Barra de progresso do uso do limite -->
-            <div class="credit-usage-bar">
-              <div class="usage-info">
-                <span class="usage-label">Uso do limite</span>
-                <span class="usage-percentage">{{ getCreditUsagePercentage(account).toFixed(1) }}%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill"
-                     [class]="'progress-' + getCreditUsageClass(account)"
-                     [style.width.%]="getCreditUsagePercentage(account)">
+          <div class="accounts-grid">
+            <div *ngFor="let account of getAccountsByBank(bankName)" class="account-card">
+              <div class="account-header">
+                <div class="account-info">
+                  <h3>{{ account.accountName }}</h3>
+                  <span class="account-type-badge" [class]="'badge-' + account.accountType.toLowerCase().replace('_', '-')">
+                    {{ getAccountTypeLabel(account.accountType) }}
+                  </span>
+                </div>
+                <div class="account-actions">
+                  <button type="button" class="btn-icon" (click)="editAccount(account)" title="Editar">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn-icon btn-danger" (click)="deleteAccount(account)" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                  </button>
                 </div>
               </div>
-              <div class="usage-amount">
-                <span class="used-amount">Usado: {{ account.accountCurrentBalanceFormatted }}</span>
+
+              <div class="account-details">
+                <!-- Para cartões de crédito: mostrar limite ao invés de saldo -->
+                <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-limit-info">
+                  <div class="credit-header">
+                    <span class="credit-label">Limite Disponível:</span>
+                    <span class="credit-available">{{ formatCreditAvailable(account) }}</span>
+                  </div>
+
+                  <div class="credit-total">
+                    <span class="credit-total-label">Limite Total:</span>
+                    <span class="credit-total-value">{{ account.accountCreditLimitFormatted }}</span>
+                  </div>
+
+                  <!-- Barra de progresso do uso do limite -->
+                  <div class="credit-usage-bar">
+                    <div class="usage-info">
+                      <span class="usage-label">Uso do limite</span>
+                      <span class="usage-percentage">{{ getCreditUsagePercentage(account).toFixed(1) }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill"
+                           [class]="'progress-' + getCreditUsageClass(account)"
+                           [style.width.%]="getCreditUsagePercentage(account)">
+                      </div>
+                    </div>
+                    <div class="usage-amount">
+                      <span class="used-amount">Usado: {{ account.accountCurrentBalanceFormatted }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Para outras contas: mostrar saldo normal -->
+                <div *ngIf="account.accountType !== AccountType.CARTAO_CREDITO" class="balance">
+                  <span class="balance-label">Saldo Atual:</span>
+                  <span class="balance-value" [class.negative]="account.accountCurrentBalance < 0">
+                    {{ account.accountCurrentBalanceFormatted }}
+                  </span>
+                </div>
+
+                <div *ngIf="account.accountDescription" class="description">
+                  <span class="description-label">Descrição:</span>
+                  <p>{{ account.accountDescription }}</p>
+                </div>
+
+                <!-- Informações da instituição bancária (apenas para contas únicas) -->
+                <div *ngIf="account.bankInstitutionName && !shouldShowAsGroup(bankName)" class="bank-info">
+                  <span class="bank-label">Banco:</span>
+                  <span class="bank-name">{{ account.bankInstitutionName }}</span>
+                </div>
+
+                <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-info">
+                  <div class="credit-dates">
+                    <span *ngIf="account.accountStatementClosingDate" class="closing-date">
+                      Fechamento: {{ account.accountStatementClosingDate }}
+                    </span>
+                    <span *ngIf="account.accountPaymentDueDate" class="due-date">
+                      Vencimento: {{ account.accountPaymentDueDate }}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Para outras contas: mostrar saldo normal -->
-          <div *ngIf="account.accountType !== AccountType.CARTAO_CREDITO" class="balance">
-            <span class="balance-label">Saldo Atual:</span>
-            <span class="balance-value" [class.negative]="account.accountCurrentBalance < 0">
-              {{ account.accountCurrentBalanceFormatted }}
-            </span>
-          </div>
-
-          <div *ngIf="account.accountDescription" class="description">
-            <span class="description-label">Descrição:</span>
-            <p>{{ account.accountDescription }}</p>
-          </div>
-
-          <!-- Informações da instituição bancária -->
-          <div *ngIf="account.bankInstitutionName" class="bank-info">
-            <span class="bank-label">Banco:</span>
-            <span class="bank-name">{{ account.bankInstitutionName }}</span>
-          </div>
-
-          <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-info">
-            <div class="credit-dates">
-              <span *ngIf="account.accountStatementClosingDate" class="closing-date">
-                Fechamento: {{ account.accountStatementClosingDate }}
-              </span>
-              <span *ngIf="account.accountPaymentDueDate" class="due-date">
-                Vencimento: {{ account.accountPaymentDueDate }}
-              </span>
             </div>
           </div>
         </div>

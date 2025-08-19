@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AccountService } from '../../core/services/account.service';
@@ -29,6 +29,10 @@ export class AccountsComponent implements OnInit {
     { value: AccountType.POUPANCA, label: 'Poupança' }
   ];
 
+  // Controle de agrupamento
+  groupedAccounts = signal<{ [bankName: string]: Account[] }>({});
+  expandedBanks = signal<Set<string>>(new Set());
+
   constructor(
     private fb: FormBuilder,
     public accountService: AccountService,
@@ -37,6 +41,14 @@ export class AccountsComponent implements OnInit {
     private currencyService: CurrencyService
   ) {
     this.accountForm = this.createForm();
+
+    // Effect para reagir a mudanças nas contas
+    effect(() => {
+      const accounts = this.accountService.accounts();
+      if (accounts.length > 0) {
+        this.groupAccountsByBank();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -60,6 +72,100 @@ export class AccountsComponent implements OnInit {
 
   loadAccounts(): void {
     this.accountService.loadAccounts(1); // userId hardcoded como 1
+  }
+
+  /**
+   * Agrupa contas por banco
+   */
+  private groupAccountsByBank(): void {
+    const accounts = this.accountService.accounts();
+    const grouped: { [bankName: string]: Account[] } = {};
+
+    accounts.forEach(account => {
+      const bankName = account.bankInstitutionName || 'Sem Banco';
+      if (!grouped[bankName]) {
+        grouped[bankName] = [];
+      }
+      grouped[bankName].push(account);
+    });
+
+    this.groupedAccounts.set(grouped);
+  }
+
+  /**
+   * Retorna as chaves dos bancos (nomes dos bancos)
+   */
+  getBankNames(): string[] {
+    return Object.keys(this.groupedAccounts());
+  }
+
+  /**
+   * Retorna as contas de um banco específico
+   */
+  getAccountsByBank(bankName: string): Account[] {
+    return this.groupedAccounts()[bankName] || [];
+  }
+
+  /**
+   * Verifica se um banco está expandido
+   */
+  isBankExpanded(bankName: string): boolean {
+    return this.expandedBanks().has(bankName);
+  }
+
+  /**
+   * Alterna a expansão de um grupo de banco
+   */
+  toggleBankExpansion(bankName: string): void {
+    const expanded = new Set(this.expandedBanks());
+    if (expanded.has(bankName)) {
+      expanded.delete(bankName);
+    } else {
+      expanded.add(bankName);
+    }
+    this.expandedBanks.set(expanded);
+  }
+
+  /**
+   * Calcula o saldo total de um banco
+   */
+  getBankTotalBalance(bankName: string): number {
+    const accounts = this.getAccountsByBank(bankName);
+    return accounts.reduce((total, account) => {
+      if (account.accountType === AccountType.CARTAO_CREDITO) {
+        // Para cartão de crédito, considera o limite disponível
+        return total + this.getCreditAvailable(account);
+      } else {
+        return total + account.accountCurrentBalance;
+      }
+    }, 0);
+  }
+
+  /**
+   * Formata o saldo total do banco
+   */
+  formatBankTotalBalance(bankName: string): string {
+    const total = this.getBankTotalBalance(bankName);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(total);
+  }
+
+  /**
+   * Retorna um resumo dos tipos de conta de um banco
+   */
+  getBankAccountTypesSummary(bankName: string): string[] {
+    const accounts = this.getAccountsByBank(bankName);
+    const types = new Set(accounts.map(account => this.getAccountTypeLabel(account.accountType)));
+    return Array.from(types);
+  }
+
+  /**
+   * Verifica se deve mostrar como grupo (mais de uma conta do mesmo banco)
+   */
+  shouldShowAsGroup(bankName: string): boolean {
+    return this.getAccountsByBank(bankName).length > 1;
   }
 
   showForm(): void {
