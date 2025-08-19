@@ -418,16 +418,20 @@
   .bank-info {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
     font-size: 0.875rem;
 
-    .label {
+    .bank-label {
       color: #6b7280;
       font-weight: 500;
     }
 
-    .value {
+    .bank-name {
       color: #374151;
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
     }
   }
 }

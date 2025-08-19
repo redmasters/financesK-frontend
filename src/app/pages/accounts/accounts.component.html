@@ -239,6 +239,12 @@
             <p>{{ account.accountDescription }}</p>
           </div>
 
+          <!-- Informações da instituição bancária -->
+          <div *ngIf="account.bankInstitutionName" class="bank-info">
+            <span class="bank-label">Banco:</span>
+            <span class="bank-name">{{ account.bankInstitutionName }}</span>
+          </div>
+
           <div *ngIf="account.accountType === AccountType.CARTAO_CREDITO" class="credit-info">
             <div class="credit-dates">
               <span *ngIf="account.accountStatementClosingDate" class="closing-date">
