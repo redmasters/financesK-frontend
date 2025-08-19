@@ -1,6 +1,7 @@
 import {Component, HostListener, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
 import {BalanceService} from '../../core/services/balance.service';
 import {FinancialData} from '../../core/models/transaction.model';
 import {TransactionService} from '../../core/services/transaction.service';
@@ -38,6 +39,7 @@ export class HomeComponent {
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
   private accountService = inject(AccountService);
+  private router = inject(Router);
 
   // Referência aos modais
   @ViewChild(TransactionModalComponent) transactionModal!: TransactionModalComponent;
@@ -632,6 +634,18 @@ export class HomeComponent {
    */
   closeAccountSelector(): void {
     this.showAccountSelector = false;
+  }
+
+  /**
+   * Navega para a página home ou recarrega dados se já estiver na home
+   */
+  navigateToHome(): void {
+    // Se já estamos na home, apenas recarrega os dados
+    if (this.router.url === '/home') {
+      this.resetToCurrentMonth();
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 
   /**

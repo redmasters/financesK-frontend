@@ -1384,3 +1384,14 @@
   color: #0369a1;
   background: rgba(3, 105, 161, 0.1);
 }
+
+/* Título clicável na home */
+.clickable-title {
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+}
