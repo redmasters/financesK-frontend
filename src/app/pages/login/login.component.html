@@ -1,0 +1,85 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Entrar</h1>
+      <p>Acesse sua conta no FinancesK</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="username">Usuário</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="credentials.username"
+          (input)="clearError()"
+          placeholder="Digite seu nome de usuário"
+          required
+          class="form-control"
+          [class.error]="error"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="credentials.password"
+          (input)="clearError()"
+          placeholder="Digite sua senha"
+          required
+          class="form-control"
+          [class.error]="error"
+        >
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ error }}
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn-primary btn-login"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">
+            <i class="fas fa-sign-in-alt"></i>
+            Entrar
+          </span>
+          <span *ngIf="isLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Entrando...
+          </span>
+        </button>
+      </div>
+
+      <!-- Register Link -->
+      <div class="form-footer">
+        <div class="register-section">
+          <p>Não tem uma conta?</p>
+          <a routerLink="/register" class="register-link">
+            <i class="fas fa-user-plus"></i>
+            Criar conta grátis
+          </a>
+        </div>
+
+        <div class="benefits-info">
+          <p class="benefits-title">Com o FinancesK você pode:</p>
+          <ul class="benefits-list">
+            <li><i class="fas fa-check"></i> Controlar receitas e despesas</li>
+            <li><i class="fas fa-check"></i> Gerenciar múltiplas contas</li>
+            <li><i class="fas fa-check"></i> Criar categorias personalizadas</li>
+            <li><i class="fas fa-check"></i> Visualizar relatórios financeiros</li>
+          </ul>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
