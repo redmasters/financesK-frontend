@@ -44,6 +44,7 @@ export class BankInstitutionService {
     this._isLoading.set(true);
     this.getAllBankInstitutions().subscribe({
       next: (institutions) => {
+        console.log('Instituições bancárias carregadas:', institutions);
         this._bankInstitutions.set(institutions);
         this._isLoading.set(false);
       },

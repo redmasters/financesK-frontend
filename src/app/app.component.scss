@@ -234,9 +234,16 @@
 
 /* Conteúdo Principal */
 .main-content {
-  margin-left: 240px;
-  flex: 1;
+  margin-left: 240px; /* Espaço para a sidebar */
   min-height: 100vh;
+  flex: 1;
+  background-color: #f5f7fa;
+  transition: margin-left 0.3s ease;
+
+  /* Quando não há sidebar (usuário deslogado), ocupa toda a largura */
+  &.full-width {
+    margin-left: 0;
+  }
 }
 
 /* Responsividade */

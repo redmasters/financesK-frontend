@@ -202,4 +202,24 @@ export class TransactionService {
   deleteTransaction(id: number): Observable<void> {
     return this.transactionApiService.deleteTransaction(id);
   }
+
+  /**
+   * Limpa todos os dados financeiros (usado quando não há contas bancárias)
+   */
+  clearData(): void {
+    this._transactions.set([]);
+    this._financialData.set({
+      totalIncome: 0,
+      totalIncomeFormatted: 'R$ 0,00',
+      totalExpense: 0,
+      totalExpenseFormatted: 'R$ 0,00',
+      balance: 0,
+      balanceFormatted: 'R$ 0,00',
+      currency: 'R$'
+    });
+    this._loading.set(false);
+    this._totalElements.set(0);
+    this._totalPages.set(0);
+    this._currentPage.set(0);
+  }
 }

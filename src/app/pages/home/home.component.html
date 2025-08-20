@@ -8,8 +8,6 @@
     </div>
     <div class="header-right">
       <div class="header-controls">
-
-
         <!-- Dropdown de Adicionar Transação -->
         <div class="add-transaction-dropdown">
           <button class="btn-action btn-add" (click)="toggleAddDropdown()" [class.active]="showAddDropdown">
@@ -35,7 +33,6 @@
         <button class="privacy-btn" (click)="toggleValueVisibility()" [title]="showValues ? 'Ocultar valores' : 'Mostrar valores'">
           <i class="fas" [class.fa-eye]="showValues" [class.fa-eye-slash]="!showValues"></i>
         </button>
-
       </div>
     </div>
   </div>
@@ -459,4 +456,13 @@
     (editRequested)="onEditFromDetails($event)"
     (deleteRequested)="onDeleteFromDetails($event)"
   ></app-transaction-detail-modal>
+
+  <!-- Onboarding Tooltip -->
+  <app-onboarding-tooltip
+    [visible]="showOnboardingTooltip"
+    [tooltip]="currentOnboardingTooltip!"
+    (nextStep)="onTooltipNext()"
+    (skipTour)="onTooltipSkip()"
+    (closeTour)="onTooltipClose()"
+  ></app-onboarding-tooltip>
 </div>

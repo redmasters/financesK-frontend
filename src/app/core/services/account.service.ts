@@ -39,11 +39,14 @@ export class AccountService {
     this.isLoading.set(true);
     this.getAccounts(userId).subscribe({
       next: (accounts) => {
-        this.accounts.set(accounts);
+        // Garantir que accounts não seja null/undefined
+        this.accounts.set(accounts || []);
         this.isLoading.set(false);
       },
       error: (error) => {
         console.error('Erro ao carregar contas:', error);
+        // Em caso de erro, definir como array vazio
+        this.accounts.set([]);
         this.isLoading.set(false);
       }
     });

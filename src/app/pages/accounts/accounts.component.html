@@ -4,6 +4,7 @@
     <button
       type="button"
       class="btn-primary"
+      id="nova-conta-btn"
       (click)="showForm()"
       [disabled]="isFormVisible()">
       <i class="fas fa-plus"></i>
@@ -91,6 +92,14 @@
 
           <div class="form-group">
             <label for="bankInstitutionId">Instituição Bancária</label>
+            <!-- Debug: Mostra quantas instituições foram carregadas -->
+            <div *ngIf="bankInstitutions().length === 0" class="debug-info">
+              <small style="color: #dc3545;">Nenhuma instituição bancária carregada ainda...</small>
+            </div>
+            <div *ngIf="bankInstitutions().length > 0" class="debug-info">
+              <small style="color: #28a745;">{{ bankInstitutions().length }} instituições carregadas</small>
+            </div>
+
             <select id="bankInstitutionId" formControlName="bankInstitutionId" class="form-control">
               <option value="">Selecione uma instituição (opcional)</option>
               <option *ngFor="let institution of bankInstitutions()" [value]="institution.institutionId">
@@ -311,4 +320,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Onboarding Tooltip -->
+  <app-onboarding-tooltip
+    [visible]="showOnboardingTooltip()"
+    [tooltip]="currentOnboardingTooltip()!"
+    [targetElement]="getTargetElement()"
+    (nextStep)="onTooltipNext()"
+    (previousStep)="onTooltipPrevious()"
+    (skipTour)="onTooltipSkip()"
+    (closeTour)="onTooltipClose()"
+  ></app-onboarding-tooltip>
 </div>

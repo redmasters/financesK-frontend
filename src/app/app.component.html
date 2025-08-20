@@ -1,6 +1,6 @@
 <div class="app-layout">
-  <!-- Sidebar Compartilhada -->
-  <div class="sidebar">
+  <!-- Sidebar Compartilhada - só aparece quando deve mostrar sidebar -->
+  <div class="sidebar" *ngIf="shouldShowSidebar">
     <div class="logo">
       <i class="fas fa-wallet"></i>
       <a routerLink="/home" class="logo-link">
@@ -37,7 +37,7 @@
           <i class="fas fa-user-circle"></i>
         </div>
         <div class="user-info">
-          <span class="user-name">{{ currentUser.name }}</span>
+          <span class="user-name">{{ currentUser?.username }}</span>
         </div>
         <div class="user-toggle">
           <i class="fas fa-chevron-up" [class.rotated]="showUserCard"></i>
@@ -51,8 +51,8 @@
             <i class="fas fa-user-circle"></i>
           </div>
           <div class="user-card-info">
-            <span class="user-card-name">{{ currentUser.name }}</span>
-            <span class="user-card-email">{{ currentUser.email }}</span>
+            <span class="user-card-name">{{ currentUser?.username }}</span>
+            <span class="user-card-email">{{ currentUser?.email }}</span>
           </div>
         </div>
         <div class="user-card-actions">
@@ -66,7 +66,7 @@
   </div>
 
   <!-- Conteúdo Principal -->
-  <div class="main-content">
+  <div class="main-content" [class.full-width]="!shouldShowSidebar">
     <router-outlet></router-outlet>
   </div>
 </div>

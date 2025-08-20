@@ -1,7 +1,7 @@
 import {Component, HostListener, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {Router} from '@angular/router';
+import {Router, ActivatedRoute} from '@angular/router';
 import {FinancialData} from '../../core/models/transaction.model';
 import {TransactionService} from '../../core/services/transaction.service';
 import {TransactionApiService} from '../../core/services/transaction-api.service';
@@ -9,6 +9,8 @@ import {CategoryService} from '../../core/services/category.service';
 import {NotificationService} from '../../core/services/notification.service';
 import {AccountService} from '../../core/services/account.service';
 import {PrivacyService} from '../../core/services/privacy.service';
+import {AuthService} from '../../core/services/auth.service';
+import {OnboardingService} from '../../core/services/onboarding.service';
 import {BrazilianDateInputDirective} from '../../shared/directives/brazilian-date-input.directive';
 import {
   PaymentStatus,
@@ -24,12 +26,13 @@ import {CategoryModalComponent} from '../../shared/components/category-modal/cat
 import {
   TransactionDetailModalComponent
 } from '../../shared/components/transaction-detail-modal/transaction-detail-modal.component';
+import {OnboardingTooltipComponent, OnboardingTooltip} from '../../shared/components/onboarding-tooltip/onboarding-tooltip.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, FormsModule, TransactionModalComponent, CategoryModalComponent,
-    TransactionDetailModalComponent, BrazilianDateInputDirective],
+    TransactionDetailModalComponent, BrazilianDateInputDirective, OnboardingTooltipComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
@@ -40,7 +43,10 @@ export class HomeComponent {
   private notificationService = inject(NotificationService);
   private accountService = inject(AccountService);
   private privacyService = inject(PrivacyService);
+  private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private onboardingService = inject(OnboardingService);
 
   // Referência aos modais
   @ViewChild(TransactionModalComponent) transactionModal!: TransactionModalComponent;
@@ -56,8 +62,8 @@ export class HomeComponent {
   selectedStatus: PaymentStatus | 'ALL' = 'ALL';
   startDate: string = '';
   endDate: string = '';
-  userId: number = 1;
-  accountsId: number[] = [1]; // IDs de contas do usuário, pode ser dinâmico
+  userId: number = 0; // Será definido dinamicamente baseado no usuário logado
+  accountsId: number[] = []; // IDs de contas do usuário, será carregado dinamicamente
 
   // Seletor de contas
   selectedAccountIds: number[] = []; // Contas selecionadas para filtrar transações
@@ -85,7 +91,18 @@ export class HomeComponent {
   // Estado da privacidade dos valores
   showValues = true;
 
+  // Onboarding state
+  isOnboardingActive = false;
+  currentOnboardingTooltip: OnboardingTooltip | null = null;
+  showOnboardingTooltip = false;
+
   constructor() {
+    // Define o userId baseado no usuário autenticado
+    const currentUser = this.authService.currentUserValue;
+    if (currentUser) {
+      this.userId = currentUser.id;
+    }
+
     // Inicializa as datas com o mês atual
     this.initializeCurrentMonthDates();
 
@@ -97,6 +114,22 @@ export class HomeComponent {
 
     // Conecta ao serviço de privacidade
     this.showValues = this.privacyService.getShowValues();
+
+    // Verifica se está em modo onboarding
+    this.route.queryParams.subscribe(params => {
+      const showOnboarding = params['onboarding'] === 'true';
+      const step = params['step'];
+
+      if (showOnboarding && step === 'first-transaction') {
+        this.isOnboardingActive = true;
+        this.startHomeOnboarding();
+      }
+    });
+
+    // Escuta mudanças no estado do onboarding
+    this.onboardingService.onboardingState$.subscribe(state => {
+      this.isOnboardingActive = state.isActive;
+    });
   }
 
   /**
@@ -108,11 +141,21 @@ export class HomeComponent {
     // Como o AccountService usa signals, vamos usar effect() para reagir às mudanças
     const checkAccountsLoaded = () => {
       const accounts = this.accountService.accounts();
+
+      // Se há contas carregadas, carrega os dados financeiros
       if (accounts.length > 0) {
-        // Contas foram carregadas, agora pode buscar transações
+        console.log('Contas carregadas, buscando transações...');
         this.updateFinancialData();
-        return true; // Indica que o efeito pode parar
+        return true;
       }
+      // Se não há contas mas o carregamento terminou, não tenta carregar transações
+      else if (!this.accountService.isLoading()) {
+        console.log('Nenhuma conta encontrada, não carregando transações');
+        // Reseta os dados financeiros para valores zerados
+        this.transactionService.clearData();
+        return true;
+      }
+
       return false;
     };
 
@@ -128,10 +171,10 @@ export class HomeComponent {
       // Timeout de segurança para evitar loop infinito
       setTimeout(() => {
         clearInterval(intervalId);
-        // Se após 5 segundos ainda não carregou, tenta carregar mesmo assim
+        // Se após 5 segundos ainda não carregou, assume que não há contas
         if (this.accountService.accounts().length === 0) {
-          console.warn('Timeout ao aguardar carregamento de contas, carregando transações sem filtro de conta');
-          this.updateFinancialData();
+          console.log('Timeout ao aguardar carregamento de contas, assumindo que não há contas cadastradas');
+          this.transactionService.clearData();
         }
       }, 5000);
     }
@@ -672,5 +715,66 @@ export class HomeComponent {
   toggleValueVisibility(): void {
     this.privacyService.toggleValueVisibility();
     this.showValues = this.privacyService.getShowValues();
+  }
+
+  /**
+   * Getter para informações do usuário atual
+   */
+  get currentUser() {
+    return this.authService.currentUserValue;
+  }
+
+
+  /**
+   * Retorna as iniciais do nome do usuário
+   */
+  getUserInitials(): string {
+    const user = this.currentUser;
+    if (!user || !user.username) return 'U';
+
+    const names = user.username.split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[1][0]).toUpperCase();
+    }
+    return user.username.substring(0, 2).toUpperCase();
+  }
+
+  private startHomeOnboarding(): void {
+    setTimeout(() => {
+      const tooltip: OnboardingTooltip = {
+        title: 'Parabéns! Você está no FinancesK!',
+        description: 'Este é o painel principal onde você pode ver todas as suas finanças. Explore os botões "Receita" e "Despesa" para começar a registrar suas transações.',
+        position: 'top',
+        showNext: true,
+        showSkip: false
+      };
+
+      this.currentOnboardingTooltip = tooltip;
+      this.showOnboardingTooltip = true;
+    }, 1000);
+  }
+
+  onTooltipNext(): void {
+    if (this.currentOnboardingTooltip?.title.includes('Parabéns')) {
+      // Completa o onboarding
+      this.onboardingService.completeOnboarding();
+      this.showOnboardingTooltip = false;
+
+      // Mostra mensagem de conclusão
+      this.notificationService.success('🎉 Onboarding concluído! Agora você pode explorar todas as funcionalidades do FinancesK.');
+
+      // Remove parâmetros de query da URL
+      this.router.navigate(['/home']);
+    }
+  }
+
+  onTooltipSkip(): void {
+    this.onboardingService.skipOnboarding();
+    this.showOnboardingTooltip = false;
+    this.router.navigate(['/home']);
+  }
+
+  onTooltipClose(): void {
+    this.showOnboardingTooltip = false;
   }
 }
