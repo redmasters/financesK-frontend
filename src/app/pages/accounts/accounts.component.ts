@@ -328,16 +328,60 @@ export class AccountsComponent implements OnInit {
 
   onTooltipNext(): void {
     if (this.currentOnboardingTooltip()?.title.includes('primeira conta')) {
-      // Mostra o formulário e vai para o próximo tooltip
-      this.showForm();
-      this.showFormTooltip();
+      // Verifica se já existe pelo menos uma conta
+      const hasAccounts = this.accountService.accounts().length > 0;
+
+      if (hasAccounts) {
+        // Se já tem contas, completa o passo e vai para home
+        this.onboardingService.completeStep('create-account');
+        this.showOnboardingTooltip.set(false);
+        this.router.navigate(['/home'], {
+          queryParams: { onboarding: 'true', step: 'first-transaction' }
+        });
+      } else {
+        // Se não tem contas, mostra o formulário e orienta a criar
+        this.showForm();
+        this.showFormTooltip();
+      }
     } else if (this.currentOnboardingTooltip()?.title.includes('Preencher os dados')) {
-      // Completa este passo e vai para home
-      this.onboardingService.completeStep('create-account');
-      this.router.navigate(['/home'], {
-        queryParams: { onboarding: 'true', step: 'first-transaction' }
-      });
+      // Verifica se o formulário está válido antes de permitir avançar
+      if (this.accountForm.valid) {
+        // Orienta o usuário a submeter o formulário
+        this.showSubmitTooltip();
+      } else {
+        // Se o formulário não está válido, mostra mensagem de orientação
+        this.notificationService.showWarning('Por favor, preencha pelo menos o nome da conta e o tipo antes de continuar.');
+      }
+    } else if (this.currentOnboardingTooltip()?.title.includes('Finalizar criação')) {
+      // Verifica novamente se tem contas antes de finalizar
+      const hasAccounts = this.accountService.accounts().length > 0;
+
+      if (hasAccounts) {
+        this.onboardingService.completeStep('create-account');
+        this.showOnboardingTooltip.set(false);
+        this.router.navigate(['/home'], {
+          queryParams: { onboarding: 'true', step: 'first-transaction' }
+        });
+      } else {
+        this.notificationService.showWarning('Você precisa criar pelo menos uma conta antes de continuar.');
+      }
     }
+  }
+
+  private showSubmitTooltip(): void {
+    setTimeout(() => {
+      const tooltip: OnboardingTooltip = {
+        title: 'Finalizar criação da conta',
+        description: 'Agora clique no botão "Criar Conta" para salvar sua primeira conta bancária e continuar.',
+        position: 'top',
+        showNext: true,
+        showPrevious: true,
+        showSkip: true
+      };
+
+      this.currentOnboardingTooltip.set(tooltip);
+      this.showOnboardingTooltip.set(true);
+    }, 300);
   }
 
   private showFormTooltip(): void {
@@ -360,6 +404,8 @@ export class AccountsComponent implements OnInit {
     if (this.currentOnboardingTooltip()?.title.includes('Preencher os dados')) {
       this.hideForm();
       this.startAccountCreationTooltip();
+    } else if (this.currentOnboardingTooltip()?.title.includes('Finalizar criação')) {
+      this.showFormTooltip();
     }
   }
 
