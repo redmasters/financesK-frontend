@@ -40,11 +40,11 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
 
         <div class="welcome-actions">
-          <button class="btn-start" (click)="startJourney()">
+          <button class="btn btn-primary btn-start" (click)="startJourney()">
             <i class="fas fa-play"></i>
             Começar Configuração
           </button>
-          <button class="btn-skip" (click)="skipOnboarding()">
+          <button class="btn btn-secondary btn-skip" (click)="skipOnboarding()">
             Pular e ir direto ao painel
           </button>
         </div>
@@ -74,221 +74,222 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
   `,
   styles: [`
+    /* Importando mixins centralizados */
+    @use '../../shared/styles/mixins' as *;
+
+    /* Estilos específicos do componente welcome usando sistema centralizado */
     .welcome-container {
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
+      @include flex-center;
+      @include gradient-background;
+      padding: var(--spacing-xl);
     }
 
     .welcome-card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-      padding: 40px;
+      @include card-base;
       width: 100%;
       max-width: 700px;
-      animation: slideUp 0.8s ease-out;
+      box-shadow: var(--shadow-xl);
+      text-align: center;
+      animation: slideUpFade 0.6s ease-out;
     }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes slideUpFade {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .welcome-header {
       text-align: center;
-      margin-bottom: 40px;
-    }
+      margin-bottom: var(--spacing-2xl);
 
-    .welcome-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
+      .welcome-icon {
+        width: 80px;
+        height: 80px;
+        @include flex-center;
+        background: var(--primary);
+        border-radius: 50%;
+        margin: 0 auto var(--spacing-lg);
 
-      i {
-        color: white;
-        font-size: 2rem;
+        i {
+          font-size: 2rem;
+          color: white;
+        }
       }
-    }
 
-    .welcome-header h1 {
-      color: #2c3e50;
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin: 0 0 10px 0;
-    }
+      h1 {
+        color: var(--dark);
+        margin-bottom: var(--spacing-sm);
+        font-size: var(--font-size-3xl);
+        font-weight: var(--font-weight-bold);
+      }
 
-    .welcome-subtitle {
-      color: #7f8c8d;
-      font-size: 1.1rem;
-      margin: 0;
+      .welcome-subtitle {
+        color: var(--gray);
+        font-size: var(--font-size-lg);
+        line-height: 1.6;
+      }
     }
 
     .onboarding-steps {
-      margin-bottom: 40px;
-    }
+      margin: var(--spacing-2xl) 0;
 
-    .steps-container {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .step-item {
-      display: flex;
-      align-items: center;
-      padding: 20px;
-      border-radius: 12px;
-      border: 2px solid #e9ecef;
-      transition: all 0.3s ease;
-
-      &.current {
-        border-color: #667eea;
-        background: #f8f9ff;
+      .steps-container {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
       }
 
-      &.completed {
-        border-color: #28a745;
-        background: #f8fff9;
-      }
-    }
+      .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 150px;
 
-    .step-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #e9ecef;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 20px;
-      font-weight: 600;
-      color: #6c757d;
-      flex-shrink: 0;
+        &.current .step-number {
+          background: var(--primary);
+          color: white;
+          animation: pulse 2s infinite;
+        }
 
-      .current & {
-        background: #667eea;
-        color: white;
-      }
+        &.completed .step-number {
+          background: var(--success);
+          color: white;
+        }
 
-      .completed & {
-        background: #28a745;
-        color: white;
-      }
-    }
+        .step-number {
+          width: 40px;
+          height: 40px;
+          @include flex-center;
+          background: var(--gray-light);
+          color: var(--gray);
+          border-radius: 50%;
+          font-weight: var(--font-weight-bold);
+          margin-bottom: var(--spacing-sm);
+          transition: all var(--transition-normal);
+        }
 
-    .step-content {
-      h3 {
-        margin: 0 0 5px 0;
-        color: #2c3e50;
-        font-size: 1.1rem;
-      }
+        .step-title {
+          font-weight: var(--font-weight-semibold);
+          color: var(--dark);
+          margin-bottom: var(--spacing-xs);
+        }
 
-      p {
-        margin: 0;
-        color: #6c757d;
-        font-size: 0.95rem;
+        .step-description {
+          font-size: var(--font-size-sm);
+          color: var(--gray);
+          line-height: 1.4;
+        }
       }
     }
 
     .welcome-actions {
       display: flex;
-      gap: 15px;
-      margin-bottom: 40px;
+      gap: var(--spacing-md);
       justify-content: center;
-    }
+      margin-top: var(--spacing-xl);
 
-    .btn-start {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 16px 32px;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      .btn {
+        padding: var(--spacing-md) var(--spacing-xl);
+        border-radius: var(--border-radius-md);
+        font-weight: var(--font-weight-semibold);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
       }
-    }
 
-    .btn-skip {
-      background: transparent;
-      color: #6c757d;
-      border: 2px solid #e9ecef;
-      padding: 16px 32px;
-      border-radius: 12px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      .btn-primary {
+        @include button-gradient;
+      }
 
-      &:hover {
-        border-color: #6c757d;
-        color: #495057;
+      .btn-secondary {
+        background: transparent;
+        color: var(--gray);
+        border: 2px solid var(--border);
+
+        &:hover {
+          border-color: var(--gray);
+          color: var(--dark);
+        }
       }
     }
 
     .welcome-benefits {
-      border-top: 1px solid #e9ecef;
-      padding-top: 30px;
+      margin-top: var(--spacing-2xl);
+      padding-top: var(--spacing-xl);
+      border-top: 1px solid var(--border);
 
       h3 {
         text-align: center;
-        color: #2c3e50;
-        margin-bottom: 20px;
-      }
-    }
-
-    .benefits-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
-
-    .benefit-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 8px;
-
-      i {
-        color: #667eea;
-        font-size: 1.2rem;
+        color: var(--dark);
+        margin-bottom: var(--spacing-xl);
+        font-size: var(--font-size-xl);
       }
 
-      span {
-        color: #495057;
-        font-size: 0.9rem;
+      .benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-lg);
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .benefit-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+
+        i {
+          width: 40px;
+          height: 40px;
+          @include flex-center;
+          background: var(--primary-light);
+          color: var(--primary);
+          border-radius: var(--border-radius-md);
+          font-size: 1.2rem;
+        }
+
+        span {
+          color: var(--gray);
+          font-weight: var(--font-weight-medium);
+        }
       }
     }
 
     @media (max-width: 768px) {
+      .welcome-container {
+        padding: var(--spacing-lg);
+      }
+
       .welcome-card {
-        padding: 30px 20px;
+        padding: var(--spacing-xl);
+      }
+
+      .onboarding-steps .steps-container {
+        flex-direction: column;
+        gap: var(--spacing-md);
       }
 
       .welcome-actions {
         flex-direction: column;
-      }
 
-      .benefits-grid {
-        grid-template-columns: 1fr;
+        .btn {
+          justify-content: center;
+        }
       }
     }
   `]

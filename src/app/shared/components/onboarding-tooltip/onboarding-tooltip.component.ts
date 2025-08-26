@@ -51,7 +51,7 @@ export interface OnboardingTooltip {
         <div class="tooltip-actions">
           <button
             *ngIf="tooltip.showPrevious"
-            class="btn-secondary"
+            class="btn btn-secondary"
             (click)="previous()"
           >
             <i class="fas fa-arrow-left"></i>
@@ -60,7 +60,7 @@ export interface OnboardingTooltip {
 
           <button
             *ngIf="tooltip.showSkip"
-            class="btn-skip"
+            class="btn btn-outline"
             (click)="skip()"
           >
             Pular Tour
@@ -68,7 +68,7 @@ export interface OnboardingTooltip {
 
           <button
             *ngIf="tooltip.showNext"
-            class="btn-primary"
+            class="btn btn-primary"
             (click)="next()"
           >
             Próximo
@@ -79,22 +79,20 @@ export interface OnboardingTooltip {
     </div>
   `,
   styles: [`
+    /* Importando mixins centralizados */
+    @use '../../../shared/styles/mixins' as *;
+
+    /* Estilos específicos do onboarding tooltip usando sistema centralizado */
     .tooltip-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 9999;
+      @include overlay;
       pointer-events: auto;
     }
 
     .element-highlight {
       position: fixed;
       background: transparent;
-      border: 3px solid #667eea;
-      border-radius: 8px;
+      border: 3px solid var(--primary);
+      border-radius: var(--border-radius-sm);
       box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
       z-index: 10000;
       pointer-events: none;
@@ -103,38 +101,37 @@ export interface OnboardingTooltip {
 
     @keyframes pulse {
       0% {
-        border-color: #667eea;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 0 rgba(102, 126, 234, 0.7);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 0 rgba(67, 97, 238, 0.7);
       }
       50% {
-        border-color: #4fd1c7;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 10px rgba(79, 209, 199, 0.3);
+        border-color: var(--success);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 10px rgba(16, 185, 129, 0.3);
       }
       100% {
-        border-color: #667eea;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 0 rgba(102, 126, 234, 0.7);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 0 rgba(67, 97, 238, 0.7);
       }
     }
 
     .tooltip-content {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      max-width: 350px;
-      min-width: 300px;
+      @include card-md;
+      max-width: 380px;
+      min-width: 320px;
       position: fixed;
       z-index: 10001;
-      animation: tooltipAppear 0.3s ease-out;
+      animation: tooltipAppear 0.4s ease-out;
+      box-shadow: var(--shadow-xl);
     }
 
     @keyframes tooltipAppear {
       from {
         opacity: 0;
-        transform: scale(0.8);
+        transform: scale(0.9) translateY(-10px);
       }
       to {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) translateY(0);
       }
     }
 
@@ -142,136 +139,129 @@ export interface OnboardingTooltip {
       position: absolute;
       width: 0;
       height: 0;
-      border: 8px solid transparent;
+      border: 10px solid transparent;
     }
 
     .tooltip-top .tooltip-arrow {
-      bottom: -16px;
+      bottom: -20px;
       left: 50%;
       transform: translateX(-50%);
       border-top-color: white;
     }
 
     .tooltip-bottom .tooltip-arrow {
-      top: -16px;
+      top: -20px;
       left: 50%;
       transform: translateX(-50%);
       border-bottom-color: white;
     }
 
     .tooltip-left .tooltip-arrow {
-      right: -16px;
+      right: -20px;
       top: 50%;
       transform: translateY(-50%);
       border-left-color: white;
     }
 
     .tooltip-right .tooltip-arrow {
-      left: -16px;
+      left: -20px;
       top: 50%;
       transform: translateY(-50%);
       border-right-color: white;
     }
 
     .tooltip-header {
-      padding: 20px 20px 10px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      margin-bottom: var(--spacing-md);
 
       h3 {
         margin: 0;
-        color: #2c3e50;
-        font-size: 1.2rem;
-        font-weight: 600;
+        color: var(--dark);
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-bold);
         flex: 1;
+        line-height: 1.3;
       }
 
       .btn-close {
         background: none;
         border: none;
-        color: #6c757d;
+        color: var(--gray);
         cursor: pointer;
-        padding: 5px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
+        transition: all var(--transition-fast);
+        margin-left: var(--spacing-md);
 
         &:hover {
-          background: #f8f9fa;
-          color: #495057;
+          background: var(--gray-light);
+          color: var(--dark);
         }
       }
     }
 
     .tooltip-body {
-      padding: 0 20px 20px;
+      margin-bottom: var(--spacing-lg);
 
       p {
         margin: 0;
-        color: #6c757d;
-        line-height: 1.5;
-        font-size: 0.95rem;
+        color: var(--gray);
+        line-height: 1.6;
+        font-size: var(--font-size-sm);
       }
     }
 
     .tooltip-actions {
-      padding: 0 20px 20px;
       display: flex;
-      gap: 10px;
+      gap: var(--spacing-sm);
       justify-content: flex-end;
-    }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        text-decoration: none;
+        border: none;
       }
-    }
 
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      .btn-primary {
+        @include button-gradient;
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
 
-      &:hover {
-        background: #5a6268;
+        &:hover {
+          box-shadow: 0 6px 20px rgba(67, 97, 238, 0.35);
+        }
       }
-    }
 
-    .btn-skip {
-      background: transparent;
-      color: #6c757d;
-      border: 1px solid #dee2e6;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      .btn-secondary {
+        background: var(--gray);
+        color: white;
 
-      &:hover {
-        border-color: #adb5bd;
-        color: #495057;
+        &:hover {
+          background: var(--gray-dark);
+          transform: translateY(-1px);
+        }
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--gray);
+        border: 2px solid var(--border);
+
+        &:hover {
+          border-color: var(--gray);
+          color: var(--dark);
+          background: rgba(107, 114, 128, 0.05);
+        }
       }
     }
 
@@ -279,16 +269,21 @@ export interface OnboardingTooltip {
       .tooltip-content {
         max-width: 90vw;
         min-width: auto;
-        margin: 20px;
+        margin: var(--spacing-lg);
+      }
+
+      .tooltip-header h3 {
+        font-size: var(--font-size-lg);
       }
 
       .tooltip-actions {
         flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--spacing-sm);
 
-        button {
+        .btn {
           flex: 1;
           min-width: 120px;
+          justify-content: center;
         }
       }
     }

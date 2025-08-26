@@ -5,8 +5,36 @@ import { NotificationComponent } from './shared/components/notification/notifica
 import { PrivacyService } from './core/services/privacy.service';
 import { AuthService } from './core/services/auth.service';
 import { OnboardingService } from './core/services/onboarding.service';
+    private router: Router,
+    private onboardingService: OnboardingService // Injetando o OnboardingService
 
-@Component({
+  /**
+   * Verifica se deve mostrar a sidebar
+   * A sidebar não deve aparecer durante o onboarding ou nas páginas de autenticação
+   */
+  get shouldShowSidebar(): boolean {
+    // Se não estiver autenticado, não mostra a sidebar
+    if (!this.isAuthenticated) {
+      return false;
+    }
+
+    // Lista de rotas onde a sidebar não deve aparecer
+    const noSidebarRoutes = ['/login', '/register', '/welcome'];
+    const currentRoute = this.router.url.split('?')[0]; // Remove query params
+
+    // Se está em uma rota sem sidebar, não mostra
+    if (noSidebarRoutes.includes(currentRoute)) {
+      return false;
+    }
+
+    // Se o onboarding está ativo, não mostra a sidebar
+    if (this.onboardingService.isOnboardingActive()) {
+      return false;
+    }
+    // Em todos os outros casos, mostra a sidebar
+    return true;
+  }
+}
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, NotificationComponent],
@@ -22,8 +50,7 @@ export class AppComponent {
   constructor(
     private privacyService: PrivacyService,
     private authService: AuthService,
-    private router: Router,
-    private onboardingService: OnboardingService // Injetando o OnboardingService
+    private router: Router
   ) {}
 
   /**
@@ -84,33 +111,5 @@ export class AppComponent {
     if (!userSection && this.showUserCard) {
       this.showUserCard = false;
     }
-  }
-
-  /**
-   * Verifica se deve mostrar a sidebar
-   * A sidebar não deve aparecer durante o onboarding ou nas páginas de autenticação
-   */
-  get shouldShowSidebar(): boolean {
-    // Se não estiver autenticado, não mostra a sidebar
-    if (!this.isAuthenticated) {
-      return false;
-    }
-
-    // Lista de rotas onde a sidebar não deve aparecer
-    const noSidebarRoutes = ['/login', '/register', '/welcome'];
-    const currentRoute = this.router.url.split('?')[0]; // Remove query params
-
-    // Se está em uma rota sem sidebar, não mostra
-    if (noSidebarRoutes.includes(currentRoute)) {
-      return false;
-    }
-
-    // Se o onboarding está ativo, não mostra a sidebar
-    if (this.onboardingService.isOnboardingActive()) {
-      return false;
-    }
-
-    // Em todos os outros casos, mostra a sidebar
-    return true;
   }
 }
