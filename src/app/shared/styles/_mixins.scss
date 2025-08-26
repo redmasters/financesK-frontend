@@ -1,0 +1,187 @@
+/* ========================================
+   FINANCES-K DESIGN SYSTEM - MIXINS
+   ======================================== */
+
+// Gradient de fundo principal
+@mixin gradient-background {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+// Card base
+@mixin card-base {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  padding: var(--spacing-xl);
+}
+
+@mixin card-sm {
+  @include card-base;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+}
+
+@mixin card-md {
+  @include card-base;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+}
+
+@mixin card-lg {
+  @include card-base;
+  padding: var(--spacing-2xl);
+  border-radius: var(--border-radius-xl);
+}
+
+// Botão base com gradiente
+@mixin button-gradient($color1: var(--primary), $color2: var(--secondary)) {
+  background: linear-gradient(135deg, #{$color1}, #{$color2});
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left var(--transition-slow);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
+// Container responsivo
+@mixin responsive-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+
+  @media (max-width: 768px) {
+    padding: 0 var(--spacing-md);
+  }
+}
+
+// Overlay base
+@mixin overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Form field
+@mixin form-field {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-normal);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    background-color: var(--background-muted);
+    cursor: not-allowed;
+  }
+}
+
+// Input com ícone
+@mixin input-with-icon {
+  position: relative;
+
+  input {
+    @include form-field;
+    padding-left: calc(var(--spacing-md) + var(--spacing-xl));
+  }
+
+  .icon {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+}
+
+// Flex center
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flex between
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Loading spinner
+@mixin loading-spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Classes utilitárias que podem ser extendidas
+.overlay {
+  @include overlay;
+}
+
+.card {
+  @include card-base;
+}
+
+.btn-gradient {
+  @include button-gradient;
+}
+
+.container {
+  @include responsive-container;
+}
