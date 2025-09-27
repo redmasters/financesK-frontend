@@ -54,32 +54,26 @@ export class RegisterComponent {
     }
 
     this.authService.register(this.registerData).subscribe({
-      next: (response) => {
-        console.log('Cadastro realizado com sucesso:', response);
+      next: (user) => {
+        console.log('Cadastro e autenticação realizados com sucesso:', user);
 
-        // Aguarda um momento para garantir que o estado de autenticação seja atualizado
-        setTimeout(() => {
-          // Verifica se o usuário foi autenticado corretamente
-          if (this.authService.isAuthenticated) {
-            console.log('Usuário autenticado com sucesso após registro');
-            this.notificationService.success('Conta criada com sucesso! Bem-vindo ao FinancesK!');
+        // Verifica se o usuário foi autenticado corretamente
+        if (this.authService.isAuthenticated && this.authService.token) {
+          console.log('Usuário autenticado com sucesso. Token disponível:', !!this.authService.token);
+          this.notificationService.success('Conta criada com sucesso! Bem-vindo ao FinancesK!');
 
-            // Inicia a jornada de onboarding para novo usuário
-            this.onboardingService.startOnboarding();
+          // Inicia a jornada de onboarding para novo usuário
+          this.onboardingService.startOnboarding();
 
-            // Aguarda mais um momento para garantir que o onboarding foi iniciado
-            setTimeout(() => {
-              console.log('Redirecionando para welcome...');
-              // Redireciona para a página de boas-vindas
-              this.router.navigate(['/welcome']);
-            }, 200);
-          } else {
-            // Se não conseguiu autenticar automaticamente, mostra erro e redireciona para login
-            console.warn('Cadastro realizado mas autenticação falhou');
-            this.notificationService.success('Conta criada com sucesso! Faça login para continuar.');
-            this.router.navigate(['/login']);
-          }
-        }, 300);
+          console.log('Redirecionando para welcome...');
+          // Redireciona para a página de boas-vindas
+          this.router.navigate(['/welcome']);
+        } else {
+          // Se não conseguiu autenticar automaticamente, mostra erro
+          console.error('Falha na autenticação após registro');
+          this.error = 'Erro na autenticação. Tente fazer login manualmente.';
+          this.router.navigate(['/login']);
+        }
       },
       error: (error) => {
         console.error('Erro no cadastro:', error);

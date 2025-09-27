@@ -1,30 +1,65 @@
 <div class="app-layout">
+  <!-- Botão Menu Hambúrguer (apenas no mobile quando logado) -->
+  <button
+    class="mobile-menu-toggle"
+    *ngIf="shouldShowSidebar && isMobile"
+    (click)="toggleMobileMenu()"
+    [class.active]="mobileMenuOpen"
+    aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Overlay para fechar o menu no mobile -->
+  <div
+    class="mobile-overlay"
+    *ngIf="shouldShowSidebar && isMobile && mobileMenuOpen"
+    (click)="onOverlayClick()">
+  </div>
+
   <!-- Sidebar Compartilhada - só aparece quando deve mostrar sidebar -->
-  <div class="sidebar" *ngIf="shouldShowSidebar">
+  <div class="sidebar"
+       *ngIf="shouldShowSidebar"
+       [class.mobile-open]="mobileMenuOpen"
+       [class.mobile-menu]="isMobile">
     <div class="logo">
       <i class="fas fa-wallet"></i>
-      <a routerLink="/home" class="logo-link">
+      <a routerLink="/home" class="logo-link" (click)="closeMobileMenu()">
         <span>FinancesK</span>
       </a>
     </div>
     <div class="nav-links">
-      <a routerLink="/home" class="nav-link" routerLinkActive="active">
+      <a routerLink="/home"
+         class="nav-link"
+         routerLinkActive="active"
+         (click)="closeMobileMenu()">
         <i class="fas fa-home"></i>
         <span>Dashboard</span>
       </a>
-      <a routerLink="/accounts" class="nav-link" routerLinkActive="active">
+      <a routerLink="/accounts"
+         class="nav-link"
+         routerLinkActive="active"
+         (click)="closeMobileMenu()">
         <i class="fas fa-university"></i>
         <span>Contas Bancárias</span>
       </a>
-      <a href="#" class="nav-link">
+      <a href="#"
+         class="nav-link"
+         (click)="closeMobileMenu()">
         <i class="fas fa-chart-line"></i>
         <span>Relatórios</span>
       </a>
-      <a routerLink="/categories" class="nav-link" routerLinkActive="active">
+      <a routerLink="/categories"
+         class="nav-link"
+         routerLinkActive="active"
+         (click)="closeMobileMenu()">
         <i class="fas fa-tags"></i>
         <span>Categorias</span>
       </a>
-      <a href="#" class="nav-link">
+      <a href="#"
+         class="nav-link"
+         (click)="closeMobileMenu()">
         <i class="fas fa-history"></i>
         <span>Histórico</span>
       </a>

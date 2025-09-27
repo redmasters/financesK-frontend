@@ -4,6 +4,73 @@
   min-height: 100vh;
   background-color: #f5f7fa;
   font-family: 'Segoe UI', system-ui, sans-serif;
+  position: relative;
+}
+
+/* Botão Menu Hambúrguer */
+.mobile-menu-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #4361ee, #3f37c9);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+  transition: all 0.3s ease;
+
+  span {
+    width: 24px;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, #5a73f0, #4c44d1);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+  }
+
+  &.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+
+  &.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  &.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+  }
+}
+
+/* Overlay para Mobile */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 /* Sidebar Compartilhada */
@@ -20,6 +87,18 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s ease;
+
+  /* Estilo para menu móvel */
+  &.mobile-menu {
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2);
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
 }
 
 .logo {
@@ -51,7 +130,7 @@
 .nav-links {
   display: flex;
   flex-direction: column;
-  flex: 1; /* Permite que ocupe o espaço disponível */
+  flex: 1;
 }
 
 .nav-link {
@@ -246,65 +325,127 @@
   }
 }
 
-/* Responsividade */
-@media (max-width: 1024px) {
+/* Responsividade Aprimorada */
+
+/* Tablet - Menu compacto */
+@media (max-width: 1024px) and (min-width: 769px) {
   .sidebar {
     width: 70px;
-  }
 
-  .logo span {
-    display: none;
-  }
+    .logo span {
+      display: none;
+    }
 
-  .nav-link span {
-    display: none;
+    .nav-link span {
+      display: none;
+    }
+
+    .user-info {
+      display: none;
+    }
+
+    .user-toggle {
+      display: none;
+    }
+
+    .user-profile {
+      justify-content: center;
+      padding: 1rem 0.5rem;
+    }
+
+    .user-card {
+      left: 100%;
+      bottom: 0;
+      width: 280px;
+      border-radius: 8px 0 0 8px;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+    }
   }
 
   .main-content {
     margin-left: 70px;
   }
+}
 
-  /* Ajustes para seção do usuário em telas menores */
-  .user-info {
-    display: none;
+/* Mobile - Menu hambúrguer */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding-top: 80px; /* Espaço para o botão hambúrguer */
   }
 
-  .user-toggle {
-    display: none;
+  .sidebar.mobile-menu {
+    width: 280px; /* Largura maior no mobile para melhor usabilidade */
   }
 
-  .user-profile {
-    justify-content: center;
-    padding: 1rem 0.5rem;
-  }
-
+  /* Ajustes para o card do usuário no mobile */
   .user-card {
-    left: 100%;
-    bottom: 0;
-    width: 280px;
-    border-radius: 8px 0 0 8px;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    left: 0;
+    right: 0;
+    width: auto;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   }
 
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+  /* Garantir que todas as informações do usuário apareçam no mobile */
+  .sidebar.mobile-menu .user-info {
+    display: block;
+  }
+
+  .sidebar.mobile-menu .user-toggle {
+    display: block;
+  }
+
+  .sidebar.mobile-menu .logo span {
+    display: inline;
+  }
+
+  .sidebar.mobile-menu .nav-link span {
+    display: inline;
   }
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    display: none;
+/* Ajustes extras para telas muito pequenas */
+@media (max-width: 480px) {
+  .mobile-menu-toggle {
+    width: 45px;
+    height: 45px;
+    top: 15px;
+    left: 15px;
+
+    span {
+      width: 20px;
+    }
+  }
+
+  .sidebar.mobile-menu {
+    width: 100vw; /* Ocupa toda a tela em dispositivos muito pequenos */
   }
 
   .main-content {
-    margin-left: 0;
+    padding-top: 75px;
   }
 }
 

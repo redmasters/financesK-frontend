@@ -5,8 +5,99 @@ import { NotificationComponent } from './shared/components/notification/notifica
 import { PrivacyService } from './core/services/privacy.service';
 import { AuthService } from './core/services/auth.service';
 import { OnboardingService } from './core/services/onboarding.service';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, NotificationComponent],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent {
+  title = 'financesK-front';
+
+  // Estado do card do usuário
+  showUserCard = false;
+
+  // Estado do menu móvel
+  mobileMenuOpen = false;
+  isMobile = false;
+
+  constructor(
+    private privacyService: PrivacyService,
+    private authService: AuthService,
     private router: Router,
-    private onboardingService: OnboardingService // Injetando o OnboardingService
+    private onboardingService: OnboardingService
+  ) {
+    this.checkScreenSize();
+  }
+
+  /**
+   * Listener para detectar mudanças no tamanho da tela
+   */
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.checkScreenSize();
+  }
+
+  /**
+   * Verifica o tamanho da tela e define se é mobile
+   */
+  private checkScreenSize(): void {
+    this.isMobile = window.innerWidth <= 768;
+
+    // Fecha o menu móvel se a tela ficar grande
+    if (!this.isMobile && this.mobileMenuOpen) {
+      this.mobileMenuOpen = false;
+    }
+  }
+
+  /**
+   * Alterna o menu móvel
+   */
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+
+    // Fecha o card do usuário quando abre/fecha o menu
+    if (this.showUserCard) {
+      this.showUserCard = false;
+    }
+  }
+
+  /**
+   * Fecha o menu móvel (usado quando clica em um link)
+   */
+  closeMobileMenu(): void {
+    this.mobileMenuOpen = false;
+  }
+
+  /**
+   * Fecha o menu móvel quando clica fora dele
+   */
+  onOverlayClick(): void {
+    this.mobileMenuOpen = false;
+  }
+
+  /**
+   * Getter para verificar se o usuário está autenticado
+   */
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated;
+  }
+
+  /**
+   * Getter para acessar o usuário atual
+   */
+  get currentUser() {
+    return this.authService.currentUserValue;
+  }
+
+  /**
+   * Getter para acessar o estado de privacidade
+   */
+  get showValues(): boolean {
+    return this.privacyService.getShowValues();
+  }
 
   /**
    * Verifica se deve mostrar a sidebar
@@ -34,45 +125,6 @@ import { OnboardingService } from './core/services/onboarding.service';
     // Em todos os outros casos, mostra a sidebar
     return true;
   }
-}
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, NotificationComponent],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
-})
-export class AppComponent {
-  title = 'financesK-front';
-
-  // Estado do card do usuário
-  showUserCard = false;
-
-  constructor(
-    private privacyService: PrivacyService,
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  /**
-   * Getter para verificar se o usuário está autenticado
-   */
-  get isAuthenticated(): boolean {
-    return this.authService.isAuthenticated;
-  }
-
-  /**
-   * Getter para acessar o usuário atual
-   */
-  get currentUser() {
-    return this.authService.currentUserValue;
-  }
-
-  /**
-   * Getter para acessar o estado de privacidade
-   */
-  get showValues(): boolean {
-    return this.privacyService.getShowValues();
-  }
 
   /**
    * Alterna a visibilidade do card do usuário
@@ -95,6 +147,7 @@ export class AppComponent {
     if (confirm('Tem certeza que deseja sair?')) {
       this.authService.logout();
       this.showUserCard = false;
+      this.mobileMenuOpen = false;
       this.router.navigate(['/login']); // Redireciona para a página inicial ou de login após o logout
     }
   }

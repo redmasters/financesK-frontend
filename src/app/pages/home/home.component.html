@@ -366,6 +366,87 @@
         </table>
       </div>
 
+      <!-- Layout Mobile em Cards (escondido no desktop) -->
+      <div *ngIf="!isLoadingTransactions && transactions.length > 0" class="transactions-mobile-layout">
+        <div *ngFor="let transaction of transactions"
+             class="transaction-card"
+             [class.income-card]="transaction.type === TransactionType.INCOME"
+             [class.expense-card]="transaction.type === TransactionType.EXPENSE">
+
+          <!-- Header do Card -->
+          <div class="transaction-card-header">
+            <div class="transaction-card-main">
+              <div class="transaction-card-title" (click)="viewTransactionDetails(transaction)">
+                {{ transaction.description }}
+              </div>
+              <div class="transaction-card-amount"
+                   [class.income-amount]="transaction.type === TransactionType.INCOME && transaction.status === 'PAID'"
+                   [class.expense-amount]="transaction.type === TransactionType.EXPENSE && transaction.status === 'PAID'"
+                   [class.pending-amount]="transaction.status === 'PENDING'"
+                   [class.failed-amount]="transaction.status === 'FAILED'">
+                {{ getDisplayValue(transaction.amountFormatted) }}
+              </div>
+            </div>
+            <div class="transaction-card-type"
+                 [class.income-type]="transaction.type === TransactionType.INCOME"
+                 [class.expense-type]="transaction.type === TransactionType.EXPENSE">
+              {{ getTransactionTypeLabel(transaction) }}
+            </div>
+          </div>
+
+          <!-- Parcelas (se existir) -->
+          <div *ngIf="transaction.installmentInfo" class="transaction-card-installment">
+            <i class="fas fa-credit-card"></i>
+            {{ transaction.installmentInfo.currentInstallment }}/{{ transaction.installmentInfo.totalInstallments }}
+          </div>
+
+          <!-- Detalhes do Card -->
+          <div class="transaction-card-details">
+            <div class="transaction-card-detail">
+              <div class="transaction-card-detail-label">Categoria</div>
+              <div class="transaction-card-detail-value">
+                {{ transaction.categoryName || 'Sem categoria' }}
+              </div>
+            </div>
+
+            <div class="transaction-card-detail">
+              <div class="transaction-card-detail-label">Vencimento</div>
+              <div class="transaction-card-detail-value">
+                {{ formatDate(transaction.dueDate) }}
+              </div>
+            </div>
+
+            <div class="transaction-card-detail">
+              <div class="transaction-card-detail-label">Status</div>
+              <div class="transaction-card-status"
+                   [class]="'status-' + transaction.status.toLowerCase()">
+                {{ getStatusLabel(transaction.status) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas (se existir) -->
+          <div *ngIf="transaction.notes" class="transaction-card-notes">
+            <i class="fas fa-sticky-note"></i>
+            {{ transaction.notes }}
+          </div>
+
+          <!-- Ações do Card -->
+          <div class="transaction-card-actions">
+            <button class="transaction-card-action edit-action"
+                    (click)="editTransaction(transaction)">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button class="transaction-card-action delete-action"
+                    (click)="confirmDeleteTransaction(transaction)">
+              <i class="fas fa-trash"></i>
+              Excluir
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Estado Vazio -->
       <div *ngIf="!isLoadingTransactions && transactions.length === 0" class="empty-state">
         <div class="empty-icon">
