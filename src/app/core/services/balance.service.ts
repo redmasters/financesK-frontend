@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PaymentStatus, TransactionType } from '../models/transaction.model';
+import { environment } from '../../../environments/environment';
 
 export interface FinancialData {
   totalIncome: number;
@@ -30,7 +31,7 @@ export interface FinancialData {
   providedIn: 'root'
 })
 export class BalanceService {
-  private readonly baseUrl = 'http://localhost:8080/api/v1/transactions';
+  private readonly baseUrl = `${environment.apiUrl}/transactions`;
 
   // Signal para os dados financeiros
   private _financialData = signal<FinancialData>({

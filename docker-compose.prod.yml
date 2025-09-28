@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: financesK-frontend-prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - frontend-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  frontend-network:
+    driver: bridge

@@ -4,9 +4,24 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:staging": "ng serve --configuration=staging",
     "build": "ng build",
+    "build:dev": "ng build --configuration=development",
+    "build:staging": "ng build --configuration=staging",
+    "build:prod": "ng build --configuration=production",
+    "build:vercel": "ng build --configuration=vercel",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "lint": "ng lint",
+    "docker:build": "docker build -t financesK-frontend .",
+    "docker:build:prod": "docker build -t financesK-frontend:prod -f Dockerfile.prod .",
+    "docker:run": "docker run -p 4200:80 financesK-frontend",
+    "deploy:staging": "npm run build:staging && echo 'Deploy staging build to your staging server'",
+    "deploy:prod": "npm run build:prod && echo 'Deploy production build to your production server'",
+    "deploy:vercel": "npm run build:vercel && vercel --prod",
+    "preview:vercel": "npm run build:vercel && vercel",
+    "vercel:install": "npm ci --legacy-peer-deps",
+    "analyze": "npm run build:vercel -- --stats-json && npx webpack-bundle-analyzer dist/finances-k-front/stats.json"
   },
   "prettier": {
     "overrides": [

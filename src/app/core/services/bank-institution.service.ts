@@ -2,12 +2,13 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BankInstitution } from '../models/bank-institution.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BankInstitutionService {
-  private readonly baseUrl = 'http://localhost:8080/api/v1/bank';
+  private readonly baseUrl = `${environment.apiUrl}/bank`;
 
   // Signal para cache das instituições
   private _bankInstitutions = signal<BankInstitution[]>([]);

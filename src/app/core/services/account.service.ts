@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Account, CreateAccountRequest, CreateAccountResponse } from '../models/account.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
-  private readonly baseUrl = 'http://localhost:8080/api/v1/accounts';
+  private readonly baseUrl = `${environment.apiUrl}/accounts`;
 
   // Signals para gerenciar estado
   accounts = signal<Account[]>([]);

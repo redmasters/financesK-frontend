@@ -3,18 +3,57 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   Transaction,
+  TransactionType,
+  PaymentStatus,
   CreateTransactionRequest,
-  CreateTransactionResponse,
-  TransactionSearchResponse,
   UpdateTransactionRequest
 } from '../models/transaction.model';
+import { environment } from '../../../environments/environment';
+
+export interface SearchTransactionParams {
+  userId: number;
+  page?: number;
+  size?: number;
+  accountsId?: number[];
+  status?: PaymentStatus;
+  categoryId?: number | null;
+  isRecurring?: boolean;
+  hasInstallments?: boolean;
+  description?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  startDate?: string;
+  endDate?: string;
+  type?: TransactionType;
+}
+
+export interface CreateTransactionResponse extends Transaction {
+  // Tipo de resposta da criação de transação
+}
+
+export interface TransactionSearchResponse {
+  content: Transaction[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  totalIncomeFormatted: string;
+  totalExpenseFormatted: string;
+  balanceFormatted: string;
+  currency: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransactionApiService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/api/v1/transactions';
+  private baseUrl = `${environment.apiUrl}/transactions`;
 
   /**
    * Cria uma nova transação
