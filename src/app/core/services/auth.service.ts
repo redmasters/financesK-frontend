@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
+import { LoggerService } from './logger.service';
 
 export interface User {
   id: number;
@@ -40,10 +41,13 @@ export class AuthService {
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser: Observable<User | null>;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private logger: LoggerService
+  ) {
     // Recupera o usuário do localStorage se existir
     const storedUser = localStorage.getItem('currentUser');
-    console.log('AuthService inicializado. Usuário armazenado:', storedUser);
+    this.logger.debug('AuthService initialized', { hasStoredUser: !!storedUser });
 
     this.currentUserSubject = new BehaviorSubject<User | null>(
       storedUser ? JSON.parse(storedUser) : null
@@ -52,7 +56,7 @@ export class AuthService {
 
     // Log do estado inicial
     const currentUser = this.currentUserValue;
-    console.log('Estado inicial da autenticação:', {
+    this.logger.debug('Initial authentication state', {
       isAuthenticated: this.isAuthenticated,
       hasToken: !!this.token,
       userId: currentUser?.id,
@@ -67,7 +71,7 @@ export class AuthService {
   public get isAuthenticated(): boolean {
     const user = this.currentUserValue;
     const hasValidUser = !!user && !!user.token;
-    console.log('Verificação de autenticação:', {
+    this.logger.debug('Authentication check', {
       hasUser: !!user,
       hasToken: !!user?.token,
       isAuthenticated: hasValidUser
@@ -77,21 +81,27 @@ export class AuthService {
 
   public get token(): string | null {
     const token = this.currentUserValue?.token || null;
-    console.log('Token solicitado:', token ? `${token.substring(0, 20)}...` : 'null');
+    this.logger.debug('Token requested', { hasToken: !!token });
     return token;
   }
 
   login(credentials: LoginRequest): Observable<User> {
-    console.log('Tentativa de login para:', credentials.username);
+    this.logger.logAuthAttempt(credentials.username);
 
     return this.http.post<User>(`${this.API_URL}/login`, credentials)
       .pipe(
-        tap(user => console.log('Resposta do login:', { ...user, token: user.token ? `${user.token.substring(0, 20)}...` : 'null' })),
+        tap(user => {
+          this.logger.debug('Login response received', {
+            userId: user.id,
+            username: user.username,
+            hasToken: !!user.token
+          });
+        }),
         map(user => {
           // Armazena o usuário no localStorage
           localStorage.setItem('currentUser', JSON.stringify(user));
           this.currentUserSubject.next(user);
-          console.log('Usuário autenticado e armazenado com sucesso');
+          this.logger.logAuthSuccess(user.username);
           return user;
         })
       );
@@ -101,7 +111,7 @@ export class AuthService {
    * Registra um novo usuário
    */
   register(userData: CreateUserRequest): Observable<User> {
-    console.log('Tentativa de registro para:', userData.username);
+    this.logger.logRegistrationAttempt(userData.username);
 
     // Se há um arquivo de avatar, usa FormData para enviar multipart
     if (userData.avatar instanceof File) {
@@ -113,7 +123,13 @@ export class AuthService {
 
       return this.http.post<CreateUserResponse>(`${this.USERS_API_URL}`, formData)
         .pipe(
-          tap(response => console.log('Resposta do registro (com avatar):', { ...response, token: response.token ? `${response.token.substring(0, 20)}...` : 'null' })),
+          tap(response => {
+            this.logger.debug('Registration response (with avatar)', {
+              userId: response.id,
+              username: response.username,
+              hasToken: !!response.token
+            });
+          }),
           switchMap(response => {
             // Se o backend retornou um token, usa ele diretamente
             if (response.token) {
@@ -126,11 +142,11 @@ export class AuthService {
               };
               localStorage.setItem('currentUser', JSON.stringify(user));
               this.currentUserSubject.next(user);
-              console.log('Usuário autenticado automaticamente após registro:', user.username);
+              this.logger.logRegistrationSuccess(user.username);
               return of(user);
             } else {
               // Se não retornou token, faz login manual
-              console.log('Token não retornado no registro, fazendo login manual...');
+              this.logger.debug('No token in registration response, performing manual login');
               return this.login({ username: userData.username, password: userData.password });
             }
           })
@@ -149,7 +165,13 @@ export class AuthService {
         }
       })
         .pipe(
-          tap(response => console.log('Resposta do registro (sem avatar):', { ...response, token: response.token ? `${response.token.substring(0, 20)}...` : 'null' })),
+          tap(response => {
+            this.logger.debug('Registration response (without avatar)', {
+              userId: response.id,
+              username: response.username,
+              hasToken: !!response.token
+            });
+          }),
           switchMap(response => {
             // Se o backend retornou um token, usa ele diretamente
             if (response.token) {
@@ -162,11 +184,11 @@ export class AuthService {
               };
               localStorage.setItem('currentUser', JSON.stringify(user));
               this.currentUserSubject.next(user);
-              console.log('Usuário autenticado automaticamente após registro:', user.username);
+              this.logger.logRegistrationSuccess(user.username);
               return of(user);
             } else {
               // Se não retornou token, faz login manual
-              console.log('Token não retornado no registro, fazendo login manual...');
+              this.logger.debug('No token in registration response, performing manual login');
               return this.login({ username: userData.username, password: userData.password });
             }
           })
@@ -175,32 +197,36 @@ export class AuthService {
   }
 
   logout(): void {
-    console.log('Fazendo logout...');
+    this.logger.debug('Logout initiated');
     // Remove o usuário do localStorage
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
-    console.log('Logout realizado com sucesso');
+    this.logger.logLogout();
   }
 
   // Método para verificar se o token ainda é válido
   // Será útil quando implementarmos JWT
   isTokenValid(): boolean {
     const user = this.currentUserValue;
-    if (!user || !user.token) {
-      console.log('Token inválido: usuário ou token não encontrado');
+    const isValid = !!(user && user.token);
+
+    this.logger.logTokenValidation(isValid);
+
+    if (!isValid) {
+      this.logger.debug('Token validation failed', { reason: 'No user or token found' });
       return false;
     }
 
     // Por enquanto, assume que o token é sempre válido
     // Futuramente aqui verificaremos a expiração do JWT
-    console.log('Token considerado válido');
+    this.logger.debug('Token validation passed');
     return true;
   }
 
   // Método para renovar o token
   // Será implementado quando tivermos JWT
   refreshToken(): Observable<User> {
-    // Placeholder para implementação futura
+    this.logger.warn('Refresh token called but not implemented');
     throw new Error('Refresh token not implemented yet');
   }
 }
