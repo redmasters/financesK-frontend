@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://financesk.ddns.net', // URL da API para Vercel
+  apiUrl: 'https://financesk.ddns.net/api/v1', // URL da API para Vercel
   enableDevTools: false,
   enableMocking: false,
   logging: {
