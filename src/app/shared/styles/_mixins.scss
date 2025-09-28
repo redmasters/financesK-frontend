@@ -206,6 +206,118 @@
   transform: translate(-50%, -50%);
 }
 
+// Animação de slide up
+@mixin slide-up-animation {
+  animation: slideUp 0.8s ease-out;
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// Animação de fade in
+@mixin fade-in-animation($duration: 0.3s) {
+  animation: fadeIn #{$duration} ease-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+// Dropdown slide animation
+@mixin dropdown-slide-animation {
+  animation: dropdownSlide 0.3s ease-out;
+
+  @keyframes dropdownSlide {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// Shimmer effect para botões
+@mixin shimmer-effect {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left var(--transition-slow);
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// Modal overlay
+@mixin modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+// Scrollbar personalizada
+@mixin custom-scrollbar($thumb-color: #cbd5e1, $track-color: #f1f5f9) {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #{$track-color};
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #{$thumb-color};
+    border-radius: 3px;
+
+    &:hover {
+      background: darken(#{$thumb-color}, 10%);
+    }
+  }
+}
+
+// Focus ring
+@mixin focus-ring($color: var(--primary)) {
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(#{red($color)}, #{green($color)}, #{blue($color)}, 0.1);
+  }
+}
+
 // Classes utilitárias que podem ser extendidas
 .overlay {
   @include overlay;

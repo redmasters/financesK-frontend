@@ -2,7 +2,13 @@
    FINANCES-K DESIGN SYSTEM - GLOBAL STYLES
    ======================================== */
 
-/* CSS Custom Properties (Variáveis Globais) */
+// Importando mixins centralizados
+@use 'app/shared/styles/mixins' as *;
+
+/* ========================================
+   CSS VARIABLES (DESIGN TOKENS)
+   ======================================== */
+
 :root {
   /* === CORES PRINCIPAIS === */
   --primary: #4361ee;
@@ -75,7 +81,7 @@
 }
 
 /* ========================================
-   RESET E BASE STYLES
+   GLOBAL RESET & BASE STYLES
    ======================================== */
 
 * {
@@ -94,260 +100,60 @@ body {
 }
 
 /* ========================================
-   MIXINS (SCSS)
+   TYPOGRAPHY
    ======================================== */
 
-// Gradient de fundo principal
-@mixin gradient-background {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-}
-
-// Card base
-@mixin card-base {
-  background: white;
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-}
-
-// Botão base com gradiente
-@mixin button-gradient($color1: var(--primary), $color2: var(--secondary)) {
-  background: linear-gradient(135deg, #{$color1}, #{$color2});
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left var(--transition-slow);
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-
-    &::before {
-      left: 100%;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-}
-
-// Animação de slide up
-@mixin slide-up-animation {
-  animation: slideUp 0.8s ease-out;
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
-
-// Container responsivo
-@mixin responsive-container {
-  max-width: var(--max-content-width);
-  margin: 0 auto;
-  padding: var(--spacing-xl);
-
-  @media (min-width: 1400px) {
-    max-width: 1300px;
-    padding: var(--spacing-2xl) var(--spacing-3xl);
-  }
-
-  @media (max-width: 768px) {
-    padding: var(--spacing-md);
-    max-width: 100%;
-  }
+body, input, button, select, textarea {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: var(--dark);
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ========================================
-   CLASSES UTILITÁRIAS
+   BUTTON STYLES
    ======================================== */
 
-/* === LAYOUT === */
-.full-height {
-  min-height: 100vh;
+// Botões primários usando o mixin centralizado
+.btn-primary {
+  @include button-gradient;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-base);
+  border-radius: var(--border-radius-md);
 }
 
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.btn-success {
+  @include button-gradient(var(--success), var(--info));
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-base);
+  border-radius: var(--border-radius-md);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+// Classes usando mixins centralizados
+.card {
+  @include card-base;
 }
 
 .container {
   @include responsive-container;
 }
 
-/* === CARDS === */
-.card {
-  @include card-base;
-  padding: var(--spacing-xl);
+.text-truncate {
+  @include text-truncate;
 }
 
-.card-sm {
-  @include card-base;
-  padding: var(--spacing-lg);
+.flex-center {
+  @include flex-center;
 }
 
-.card-lg {
-  @include card-base;
-  padding: var(--spacing-2xl);
-}
-
-/* === BOTÕES === */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  text-decoration: none;
-  border: none;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.btn-primary {
-  @include button-gradient;
-  box-shadow: 0 4px 15px rgba(67, 97, 238, 0.25);
-
-  &:hover:not(:disabled) {
-    box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
-  }
-}
-
-.btn-success {
-  @include button-gradient(var(--success), var(--info));
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
-
-  &:hover:not(:disabled) {
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
-  }
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--gray);
-  border: 2px solid var(--border);
-
-  &:hover:not(:disabled) {
-    border-color: var(--gray);
-    color: var(--dark);
-    background: var(--gray-light);
-  }
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
-
-  &:hover:not(:disabled) {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
-  }
-}
-
-.btn-sm {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
-}
-
-.btn-lg {
-  padding: var(--spacing-lg) var(--spacing-2xl);
-  font-size: var(--font-size-lg);
-}
-
-/* === FORMULÁRIOS === */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
-}
-
-.form-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--dark);
-}
-
-.form-control {
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-base);
-  transition: border-color var(--transition-normal);
-  background: white;
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
-  }
-
-  &:disabled {
-    background-color: var(--background-muted);
-    cursor: not-allowed;
-  }
-}
-
-.error-message {
-  color: var(--danger);
-  font-size: var(--font-size-sm);
-  margin-top: var(--spacing-xs);
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-xl);
-  color: var(--gray);
-  font-size: var(--font-size-lg);
-
-  i {
-    margin-right: var(--spacing-sm);
-    animation: spin 1s linear infinite;
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.flex-between {
+  @include flex-between;
 }
 
 /* ========================================
