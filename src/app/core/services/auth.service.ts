@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { LoggerService } from './logger.service';
+import { environment } from '../../../environments/environment';
 
 export interface User {
   id: number;
@@ -36,8 +37,8 @@ export interface CreateUserResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly API_URL = 'http://localhost:8080/api/v1/auth';
-  private readonly USERS_API_URL = 'http://localhost:8080/api/v1/users';
+  private readonly API_URL = `${environment.apiUrl}/auth`;
+  private readonly USERS_API_URL = `${environment.apiUrl}/users`;
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser: Observable<User | null>;
 

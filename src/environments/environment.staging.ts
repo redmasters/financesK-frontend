@@ -1,12 +1,12 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api/v1',
-  enableDevTools: true,
+  apiUrl: 'https://staging-api.yourdomain.com/api/v1', // Substitua por seu domínio de staging
+  enableDevTools: false,
   enableMocking: false,
   logging: {
-    level: 'debug',
+    level: 'info',
     enableConsole: true,
-    enableRemoteLogging: false
+    enableRemoteLogging: true
   },
   features: {
     enableAnalytics: false,
@@ -14,7 +14,8 @@ export const environment = {
     enableOnboarding: true
   },
   security: {
-    enableHttps: false,
-    enableCSP: false
+    enableHttps: true,
+    enableCSP: true
   }
 };
+

@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.yourdomain.com/api/v1', // Substitua por seu domínio de produção
+  apiUrl: 'https://financesk.ddns.net/api/v1', // URL da API para Vercel
   enableDevTools: false,
   enableMocking: false,
   logging: {
@@ -16,5 +16,11 @@ export const environment = {
   security: {
     enableHttps: true,
     enableCSP: true
+  },
+  vercel: {
+    enabled: true,
+    analytics: true,
+    vitals: true
   }
 };
+

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { FinancialData } from './balance.service';
 import { PaymentStatus } from '../models/transaction.model';
+import { environment } from '../../../environments/environment';
 
 export interface FinancialStatsParams {
   userId: number;
@@ -36,7 +37,7 @@ export interface FinancialStatsParams {
 })
 export class FinancialApiService {
   private http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api/v1';
+  private readonly baseUrl = `${environment.apiUrl}`;
 
   /**
    * Busca estatísticas financeiras do backend
