@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface OnboardingTooltip {
@@ -289,7 +289,7 @@ export interface OnboardingTooltip {
     }
   `]
 })
-export class OnboardingTooltipComponent {
+export class OnboardingTooltipComponent implements OnChanges {
   @Input() visible = false;
   @Input() tooltip!: OnboardingTooltip;
   @Input() targetElement?: HTMLElement;
@@ -302,7 +302,7 @@ export class OnboardingTooltipComponent {
   tooltipPosition: any = {};
   targetElementRect: any;
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges): void {
     if (this.visible && this.tooltip) {
       setTimeout(() => {
         this.calculateTooltipPosition();
