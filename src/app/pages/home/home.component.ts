@@ -101,6 +101,20 @@ export class HomeComponent {
     const currentUser = this.authService.currentUserValue;
     if (currentUser) {
       this.userId = currentUser.id;
+    } else {
+      // Se não há usuário autenticado, redireciona para login
+      console.warn('No authenticated user found, redirecting to login');
+      this.notificationService.error('Sessão expirada. Por favor, faça login novamente.');
+      this.router.navigate(['/login']);
+      return; // Interrompe a execução do constructor
+    }
+
+    // Validação adicional do userId
+    if (!this.userId || this.userId <= 0) {
+      console.error('Invalid user ID detected:', this.userId);
+      this.notificationService.error('Erro de autenticação. Por favor, faça login novamente.');
+      this.router.navigate(['/login']);
+      return;
     }
 
     // Inicializa as datas com o mês atual

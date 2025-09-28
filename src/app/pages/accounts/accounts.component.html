@@ -92,13 +92,6 @@
 
           <div class="form-group">
             <label for="bankInstitutionId">Instituição Bancária</label>
-            <!-- Debug: Mostra quantas instituições foram carregadas -->
-            <div *ngIf="bankInstitutions().length === 0" class="debug-info">
-              <small style="color: #dc3545;">Nenhuma instituição bancária carregada ainda...</small>
-            </div>
-            <div *ngIf="bankInstitutions().length > 0" class="debug-info">
-              <small style="color: #28a745;">{{ bankInstitutions().length }} instituições carregadas</small>
-            </div>
 
             <select id="bankInstitutionId" formControlName="bankInstitutionId" class="form-control">
               <option value="">Selecione uma instituição (opcional)</option>
