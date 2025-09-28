@@ -28,7 +28,7 @@ npm run build:vercel
 
 ### Output Directory
 ```
-dist/finances-k-front
+dist/financesK-front/browser
 ```
 
 ### Node.js Version
@@ -42,8 +42,10 @@ Configure no painel da Vercel:
 
 ```env
 NODE_ENV=production
-API_URL=https://sua-api.com/api/v1
+API_URL=https://financesk.ddns.net/api/v1
 ```
+
+**⚠️ Importante**: A URL da API deve corresponder à configurada no `environment.vercel.ts`
 
 ## 🔧 Configurações de Performance
 
@@ -84,17 +86,30 @@ Configurado automaticamente com:
 
 ### Problemas Comuns:
 
-1. **Build Error - Memory**
+1. **CSP Error - "Refused to connect"**
+   ```
+   Refused to connect to 'https://financesk.ddns.net/auth/login' because it violates 
+   the following Content Security Policy directive
+   ```
+   
+   **Solução**: ✅ **Já corrigido!** O `vercel.json` foi atualizado para incluir `https://financesk.ddns.net` na diretiva `connect-src`.
+   
+   Se você precisar adicionar novos domínios de API, edite o `vercel.json`:
+   ```json
+   "connect-src 'self' https://*.vercel.app https://financesk.ddns.net https://seu-novo-dominio.com;"
+   ```
+
+2. **Build Error - Memory**
    - Configurado NODE_OPTIONS com 4GB
    - Build otimizado para Vercel
 
-2. **404 em Rotas**
+3. **404 em Rotas**
    - Configurado SPA fallback no vercel.json
    - Rewrites automáticos para /index.html
 
-3. **CORS Issues**
+4. **CORS Issues**
    - Verificar API URL no environment.vercel.ts
-   - Configurar CORS no backend
+   - Configurar CORS no backend para permitir origem da Vercel
 
 ### Logs e Debug:
 ```bash
@@ -103,23 +118,27 @@ vercel logs [deployment-url]
 
 # Build local para debug
 npm run build:vercel
+
+# Testar CSP localmente
+# Abrir DevTools > Console para ver erros de CSP
 ```
 
 ## 📁 Estrutura de Arquivos
 
 ```
-├── vercel.json          # Configuração principal
+├── vercel.json          # Configuração principal + CSP
 ├── .vercelignore        # Arquivos ignorados
 ├── .nvmrc              # Versão do Node.js
 ├── src/
 │   ├── main.vercel.ts   # Bootstrap otimizado
 │   └── environments/
-│       └── environment.vercel.ts
+│       └── environment.vercel.ts  # API: financesk.ddns.net
 └── angular.json         # Config de build Vercel
 ```
 
-## 🌐 URLs de Exemplo
+## 🌐 URLs Configuradas
 
+- **API Backend**: `https://financesk.ddns.net/api/v1`
 - **Preview**: `https://your-app-git-branch.vercel.app`
 - **Production**: `https://your-app.vercel.app`
 
@@ -130,6 +149,14 @@ npm run build:vercel
 - Cumulative Layout Shift: < 0.1
 - Bundle Size: < 1.5MB
 
+## 🔒 Content Security Policy
+
+O CSP está configurado para permitir conexões com:
+- `'self'` (próprio domínio)
+- `https://*.vercel.app` (domínios da Vercel)
+- `https://financesk.ddns.net` (API backend)
+- `https://api.financesK.com` (API alternativa)
+
 ---
 
-**Nota**: Lembre-se de atualizar a URL da API no `environment.vercel.ts` antes do deploy!
+**✅ Status**: Erro de CSP corrigido! O login deve funcionar normalmente na preview da Vercel.
