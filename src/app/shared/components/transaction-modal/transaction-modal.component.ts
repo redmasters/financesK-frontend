@@ -6,6 +6,8 @@ import {TransactionService} from '../../../core/services/transaction.service';
 import {CategoryService} from '../../../core/services/category.service';
 import {NotificationService} from '../../../core/services/notification.service';
 import {CurrencyService} from '../../../core/services/currency.service';
+import {AuthService} from '../../../core/services/auth.service';
+import {AccountService} from '../../../core/services/account.service';
 import {CurrencyInputDirective} from '../../directives/currency-input.directive';
 import {BrazilianDateInputDirective} from '../../directives/brazilian-date-input.directive';
 import {
@@ -38,6 +40,8 @@ export class TransactionModalComponent {
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
   private currencyService = inject(CurrencyService);
+  private authService = inject(AuthService);
+  private accountService = inject(AccountService);
 
   // Event emitters
   transactionCreated = output<void>();
@@ -97,6 +101,14 @@ export class TransactionModalComponent {
   constructor() {
     // Carrega categorias ao inicializar o componente
     this.categoryService.getAllCategories().subscribe();
+
+    // Inicializa o userId baseado no usuário autenticado
+    const currentUser = this.authService.currentUserValue;
+    if (currentUser) {
+      this.transactionForm.userId = currentUser.id;
+      // Carrega as contas do usuário para ter a primeira conta disponível
+      this.accountService.loadAccounts(currentUser.id);
+    }
   }
 
   // Getter para acessar categorias
@@ -106,6 +118,11 @@ export class TransactionModalComponent {
 
   get isLoadingCategories() {
     return this.categoryService.loading();
+  }
+
+  // Getter para acessar as contas do usuário
+  get userAccounts() {
+    return this.accountService.accounts();
   }
 
   /**
@@ -128,6 +145,8 @@ export class TransactionModalComponent {
   open(type: TransactionType): void {
     this.transactionForm.type = type;
     this.transactionForm.operationType = type === TransactionType.INCOME ? AccountOperationType.SALARY : AccountOperationType.PAYMENT;
+    // Define a conta padrão quando abre o modal
+    this.transactionForm.accountId = this.getDefaultAccountId();
     this.isVisible.set(true);
   }
 
@@ -292,6 +311,10 @@ export class TransactionModalComponent {
    * Reseta os formulários
    */
   private resetForms(): void {
+    const currentUser = this.authService.currentUserValue;
+    const userId = currentUser ? currentUser.id : 1; // Fallback para 1 se não houver usuário
+    const defaultAccountId = this.getDefaultAccountId();
+
     this.transactionForm = {
       description: '',
       amount: 0,
@@ -302,8 +325,8 @@ export class TransactionModalComponent {
       categoryId: 1,
       dueDate: '',
       notes: '',
-      userId: 1,
-      accountId: 1
+      userId: userId,
+      accountId: defaultAccountId
     };
 
     this.updateForm = {
@@ -317,7 +340,7 @@ export class TransactionModalComponent {
       dueDate: '',
       notes: '',
       currentInstallment: 1,
-      accountId: 1
+      accountId: defaultAccountId
     };
 
     this.selectedTransactionType = TransactionTypeLocal.SINGLE;
@@ -437,5 +460,16 @@ export class TransactionModalComponent {
       // Para o preview, usa formatação simples (sem separador de milhares)
       return `R$ ${reaisValue.toFixed(2).replace('.', ',')}`;
     }
+  }
+
+  /**
+   * Retorna a primeira conta disponível do usuário ou fallback para ID 1
+   */
+  private getDefaultAccountId(): number {
+    const accounts = this.userAccounts;
+    if (accounts && accounts.length > 0) {
+      return accounts[0].accountId;
+    }
+    return 1; // Fallback se não houver contas
   }
 }

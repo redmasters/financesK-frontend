@@ -1,0 +1,144 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <h1>Criar Conta</h1>
+      <p>Junte-se ao FinancesK e tome controle das suas finanças</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="register-form">
+      <!-- Avatar Upload Section -->
+      <div class="avatar-section">
+        <div class="avatar-upload-container">
+          <div class="avatar-preview" (click)="triggerAvatarUpload()">
+            <div *ngIf="!avatarPreview" class="avatar-placeholder">
+              <i class="fas fa-user-plus"></i>
+              <span>Adicionar Foto</span>
+            </div>
+            <img *ngIf="avatarPreview" [src]="avatarPreview" alt="Avatar Preview" class="avatar-image">
+            <div class="avatar-overlay">
+              <i class="fas fa-camera"></i>
+            </div>
+          </div>
+
+          <input
+            type="file"
+            id="avatar-input"
+            accept="image/*"
+            (change)="onAvatarSelected($event)"
+            style="display: none;"
+          >
+
+          <div class="avatar-actions" *ngIf="selectedAvatar">
+            <button type="button" class="btn-remove-avatar" (click)="removeAvatar()">
+              <i class="fas fa-trash"></i>
+              Remover
+            </button>
+          </div>
+        </div>
+        <p class="avatar-hint">Opcional - Adicione uma foto de perfil (máx. 5MB)</p>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">Nome de Usuário *</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            [(ngModel)]="registerData.username"
+            (input)="clearError()"
+            placeholder="Digite seu nome de usuário"
+            required
+            minlength="3"
+            class="form-control"
+            [class.error]="error"
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="registerData.email"
+            (input)="clearError()"
+            placeholder="Digite seu email"
+            required
+            class="form-control"
+            [class.error]="error"
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="password">Senha *</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            [(ngModel)]="registerData.password"
+            (input)="clearError()"
+            placeholder="Digite sua senha (mín. 6 caracteres)"
+            required
+            minlength="6"
+            class="form-control"
+            [class.error]="error"
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar Senha *</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            (input)="clearError()"
+            placeholder="Confirme sua senha"
+            required
+            class="form-control"
+            [class.error]="error"
+          >
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ error }}
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn-primary btn-register"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">
+            <i class="fas fa-user-plus"></i>
+            Criar Conta
+          </span>
+          <span *ngIf="isLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+            Criando conta...
+          </span>
+        </button>
+      </div>
+
+      <!-- Login Link -->
+      <div class="form-footer">
+        <p>Já tem uma conta?
+          <a routerLink="/login" class="login-link">Faça login</a>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,17 +1,22 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AccountService } from '../../core/services/account.service';
 import { BankInstitutionService } from '../../core/services/bank-institution.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { CurrencyService } from '../../core/services/currency.service';
+import { PrivacyService } from '../../core/services/privacy.service';
+import { AuthService } from '../../core/services/auth.service';
+import { OnboardingService } from '../../core/services/onboarding.service';
 import { Account, AccountType, CreateAccountRequest } from '../../core/models/account.model';
 import { CurrencyInputDirective } from '../../shared/directives/currency-input.directive';
+import { OnboardingTooltipComponent, OnboardingTooltip } from '../../shared/components/onboarding-tooltip/onboarding-tooltip.component';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyInputDirective],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyInputDirective, OnboardingTooltipComponent],
   templateUrl: './accounts.component.html',
   styleUrls: ['./accounts.component.scss']
 })
@@ -19,7 +24,11 @@ export class AccountsComponent implements OnInit {
   accountForm: FormGroup;
   isFormVisible = signal<boolean>(false);
   editingAccount = signal<Account | null>(null);
-  Math = Math;
+
+  // Onboarding state
+  isOnboardingActive = signal<boolean>(false);
+  currentOnboardingTooltip = signal<OnboardingTooltip | null>(null);
+  showOnboardingTooltip = signal<boolean>(false);
 
   readonly AccountType = AccountType;
   readonly accountTypes = [
@@ -33,13 +42,19 @@ export class AccountsComponent implements OnInit {
   groupedAccounts = signal<{ [bankName: string]: Account[] }>({});
   expandedBanks = signal<Set<string>>(new Set());
 
-  constructor(
-    private fb: FormBuilder,
-    public accountService: AccountService,
-    private notificationService: NotificationService,
-    private bankInstitutionService: BankInstitutionService,
-    private currencyService: CurrencyService
-  ) {
+  // Serviços injetados
+  private fb = inject(FormBuilder);
+  public accountService = inject(AccountService);
+  private notificationService = inject(NotificationService);
+  private bankInstitutionService = inject(BankInstitutionService);
+  private currencyService = inject(CurrencyService);
+  private privacyService = inject(PrivacyService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private onboardingService = inject(OnboardingService);
+
+  constructor() {
     this.accountForm = this.createForm();
 
     // Effect para reagir a mudanças nas contas
@@ -49,11 +64,39 @@ export class AccountsComponent implements OnInit {
         this.groupAccountsByBank();
       }
     });
+
+    // Effect para monitorar o carregamento das instituições bancárias
+    effect(() => {
+      const institutions = this.bankInstitutions();
+      console.log('Instituições bancárias no componente:', institutions);
+    });
   }
 
   ngOnInit(): void {
     this.loadAccounts();
     this.bankInstitutionService.loadAllBankInstitutions();
+
+    // Verifica se está em modo onboarding - melhorado
+    this.route.queryParams.subscribe(params => {
+      console.log('Query params recebidos:', params);
+
+      const showOnboarding = params['onboarding'] === 'true';
+      const step = params['step'];
+
+      console.log('Onboarding ativo:', showOnboarding, 'Step:', step);
+
+      if (showOnboarding && step === 'create-account') {
+        console.log('Iniciando tooltip do onboarding...');
+        this.isOnboardingActive.set(true);
+        this.startAccountCreationTooltip();
+      }
+    });
+
+    // Escuta mudanças no estado do onboarding
+    this.onboardingService.onboardingState$.subscribe(state => {
+      console.log('Estado do onboarding mudou:', state);
+      this.isOnboardingActive.set(state.isActive);
+    });
   }
 
   private createForm(): FormGroup {
@@ -71,7 +114,9 @@ export class AccountsComponent implements OnInit {
   }
 
   loadAccounts(): void {
-    this.accountService.loadAccounts(1); // userId hardcoded como 1
+    const currentUser = this.authService.currentUserValue;
+    const userId = currentUser ? currentUser.id : 1; // Fallback para 1 se não houver usuário
+    this.accountService.loadAccounts(userId);
   }
 
   /**
@@ -241,6 +286,8 @@ export class AccountsComponent implements OnInit {
   onSubmit(): void {
     if (this.accountForm.valid) {
       const formValue = this.accountForm.value;
+      const currentUser = this.authService.currentUserValue;
+      const userId = currentUser ? currentUser.id : 1; // Fallback para 1 se não houver usuário
 
       const accountData: CreateAccountRequest = {
         accountName: formValue.accountName,
@@ -252,7 +299,7 @@ export class AccountsComponent implements OnInit {
         accountCreditLimit: formValue.accountCreditLimit || undefined, // A diretiva já envia em centavos
         accountStatementClosingDate: formValue.accountStatementClosingDate || undefined,
         accountPaymentDueDate: formValue.accountPaymentDueDate || undefined,
-        userId: 1
+        userId: userId
       };
 
       if (this.editingAccount()) {
@@ -263,12 +310,133 @@ export class AccountsComponent implements OnInit {
     }
   }
 
+  private startAccountCreationTooltip(): void {
+    setTimeout(() => {
+      const tooltip: OnboardingTooltip = {
+        title: 'Criar sua primeira conta bancária',
+        description: 'Vamos começar criando sua primeira conta bancária. Clique no botão "Nova Conta" para começar.',
+        position: 'bottom',
+        targetElement: 'nova-conta-btn',
+        showNext: true,
+        showSkip: true
+      };
+
+      this.currentOnboardingTooltip.set(tooltip);
+      this.showOnboardingTooltip.set(true);
+    }, 500);
+  }
+
+  onTooltipNext(): void {
+    if (this.currentOnboardingTooltip()?.title.includes('primeira conta')) {
+      // Verifica se já existe pelo menos uma conta
+      const hasAccounts = this.accountService.accounts().length > 0;
+
+      if (hasAccounts) {
+        // Se já tem contas, completa o passo e vai para home
+        this.onboardingService.completeStep('create-account');
+        this.showOnboardingTooltip.set(false);
+        this.router.navigate(['/home'], {
+          queryParams: { onboarding: 'true', step: 'first-transaction' }
+        });
+      } else {
+        // Se não tem contas, mostra o formulário e orienta a criar
+        this.showForm();
+        this.showFormTooltip();
+      }
+    } else if (this.currentOnboardingTooltip()?.title.includes('Preencher os dados')) {
+      // Verifica se o formulário está válido antes de permitir avançar
+      if (this.accountForm.valid) {
+        // Orienta o usuário a submeter o formulário
+        this.showSubmitTooltip();
+      } else {
+        // Se o formulário não está válido, mostra mensagem de orientação
+        this.notificationService.showWarning('Por favor, preencha pelo menos o nome da conta e o tipo antes de continuar.');
+      }
+    } else if (this.currentOnboardingTooltip()?.title.includes('Finalizar criação')) {
+      // Verifica novamente se tem contas antes de finalizar
+      const hasAccounts = this.accountService.accounts().length > 0;
+
+      if (hasAccounts) {
+        this.onboardingService.completeStep('create-account');
+        this.showOnboardingTooltip.set(false);
+        this.router.navigate(['/home'], {
+          queryParams: { onboarding: 'true', step: 'first-transaction' }
+        });
+      } else {
+        this.notificationService.showWarning('Você precisa criar pelo menos uma conta antes de continuar.');
+      }
+    }
+  }
+
+  private showSubmitTooltip(): void {
+    setTimeout(() => {
+      const tooltip: OnboardingTooltip = {
+        title: 'Finalizar criação da conta',
+        description: 'Agora clique no botão "Criar Conta" para salvar sua primeira conta bancária e continuar.',
+        position: 'top',
+        showNext: true,
+        showPrevious: true,
+        showSkip: true
+      };
+
+      this.currentOnboardingTooltip.set(tooltip);
+      this.showOnboardingTooltip.set(true);
+    }, 300);
+  }
+
+  private showFormTooltip(): void {
+    setTimeout(() => {
+      const tooltip: OnboardingTooltip = {
+        title: 'Preencher os dados da conta',
+        description: 'Preencha os dados da sua conta bancária. No mínimo, você precisa informar o nome e o tipo da conta.',
+        position: 'left',
+        showNext: true,
+        showPrevious: true,
+        showSkip: true
+      };
+
+      this.currentOnboardingTooltip.set(tooltip);
+      this.showOnboardingTooltip.set(true);
+    }, 300);
+  }
+
+  onTooltipPrevious(): void {
+    if (this.currentOnboardingTooltip()?.title.includes('Preencher os dados')) {
+      this.hideForm();
+      this.startAccountCreationTooltip();
+    } else if (this.currentOnboardingTooltip()?.title.includes('Finalizar criação')) {
+      this.showFormTooltip();
+    }
+  }
+
+  onTooltipSkip(): void {
+    this.onboardingService.skipOnboarding();
+    this.showOnboardingTooltip.set(false);
+    this.router.navigate(['/home']);
+  }
+
+  onTooltipClose(): void {
+    this.showOnboardingTooltip.set(false);
+  }
+
   private createAccount(accountData: CreateAccountRequest): void {
     this.accountService.createAccount(accountData).subscribe({
       next: (response) => {
         this.notificationService.showSuccess('Conta criada com sucesso!');
         this.hideForm();
         this.loadAccounts();
+
+        // Se está em onboarding, completa este passo e vai para o próximo
+        if (this.isOnboardingActive()) {
+          this.onboardingService.completeStep('create-account');
+          this.showOnboardingTooltip.set(false);
+
+          setTimeout(() => {
+            this.router.navigate(['/home'], {
+              queryParams: { onboarding: 'true', step: 'first-transaction' }
+            });
+          }, 1500);
+        }
       },
       error: (error) => {
         console.error('Erro ao criar conta:', error);
@@ -370,5 +538,24 @@ export class AccountsComponent implements OnInit {
     if (percentage >= 90) return 'danger';
     if (percentage >= 70) return 'warning';
     return 'success';
+  }
+
+  /**
+   * Método para ser usado no template para valores monetários
+   */
+  getDisplayValue(value: string): string {
+    return this.privacyService.getDisplayValue(value);
+  }
+
+  startOnboarding(): void {
+    // Inicia o processo de onboarding
+    this.onboardingService.startOnboarding();
+  }
+
+  getTargetElement(): HTMLElement | undefined {
+    const tooltip = this.currentOnboardingTooltip();
+    if (!tooltip || !tooltip.targetElement) return undefined;
+
+    return document.getElementById(tooltip.targetElement) || undefined;
   }
 }

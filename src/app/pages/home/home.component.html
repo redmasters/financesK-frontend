@@ -7,14 +7,33 @@
       <p class="page-subtitle">Gerencie suas finanças de forma inteligente</p>
     </div>
     <div class="header-right">
-      <button class="btn-action btn-income" (click)="openIncomeModal()">
-        <i class="fas fa-plus-circle"></i>
-        Nova Receita
-      </button>
-      <button class="btn-action btn-expense" (click)="openExpenseModal()">
-        <i class="fas fa-plus"></i>
-        Nova Despesa
-      </button>
+      <div class="header-controls">
+        <!-- Dropdown de Adicionar Transação -->
+        <div class="add-transaction-dropdown">
+          <button class="btn-action btn-add" (click)="toggleAddDropdown()" [class.active]="showAddDropdown">
+            <i class="fas fa-plus"></i>
+            Adicionar
+            <i class="fas fa-chevron-down dropdown-arrow" [class.rotated]="showAddDropdown"></i>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div class="dropdown-menu" *ngIf="showAddDropdown" (click)="$event.stopPropagation()">
+            <button class="dropdown-item income-item" (click)="openIncomeModal()">
+              <i class="fas fa-plus-circle"></i>
+              <span>Nova Receita</span>
+            </button>
+            <button class="dropdown-item expense-item" (click)="openExpenseModal()">
+              <i class="fas fa-minus-circle"></i>
+              <span>Nova Despesa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botão de Privacidade -->
+        <button class="privacy-btn" (click)="toggleValueVisibility()" [title]="showValues ? 'Ocultar valores' : 'Mostrar valores'">
+          <i class="fas" [class.fa-eye]="showValues" [class.fa-eye-slash]="!showValues"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -27,7 +46,7 @@
           <div class="balance-title">SALDO DO MÊS</div>
           <div class="balance-value" [class.positive]="financialData.balance > 0"
                [class.negative]="financialData.balance < 0">
-            {{ financialData.balanceFormatted }}
+            {{ getDisplayValue(financialData.balanceFormatted) }}
           </div>
           <div class="balance-subtitle">Atualizado em {{ getCurrentDate() }}</div>
         </div>
@@ -49,7 +68,7 @@
       </div>
       <div class="card-content">
         <div class="card-title">ENTRADAS</div>
-        <div class="card-value">{{ financialData.totalIncomeFormatted }}</div>
+        <div class="card-value">{{ getDisplayValue(financialData.totalIncomeFormatted) }}</div>
         <div class="card-subtitle">Total recebido</div>
       </div>
     </div>
@@ -60,7 +79,7 @@
       </div>
       <div class="card-content">
         <div class="card-title">GASTOS TOTAIS</div>
-        <div class="card-value">{{ financialData.totalExpenseFormatted }}</div>
+        <div class="card-value">{{ getDisplayValue(financialData.totalExpenseFormatted) }}</div>
         <div class="card-subtitle">{{ getExpensePercentage() }}% das entradas</div>
       </div>
     </div>
@@ -146,11 +165,11 @@
                       <span class="account-type">{{ account.accountType }}</span>
                       <span class="account-balance"
                             *ngIf="account.accountType !== AccountType.CARTAO_CREDITO">
-                        {{ account.accountCurrentBalanceFormatted }}
+                        {{ getDisplayValue(account.accountCurrentBalanceFormatted) }}
                       </span>
                       <span class="account-limit"
-                            *ngIf="account.accountType === AccountType.CARTAO_CREDITO">
-                        Limite: {{ account.accountCreditLimitFormatted }}
+                            *ngIf="account.accountType === AccountType.CARTAO_CREDITO && account.accountCreditLimitFormatted">
+                        Limite: {{ getDisplayValue(account.accountCreditLimitFormatted) }}
                       </span>
                     </span>
                   </span>
@@ -310,7 +329,7 @@
                    [class.expense-amount]="transaction.type === TransactionType.EXPENSE && transaction.status === 'PAID'"
                    [class.pending-amount]="transaction.status === 'PENDING'"
                    [class.failed-amount]="transaction.status === 'FAILED'">
-                {{ transaction.amountFormatted }}
+                {{ getDisplayValue(transaction.amountFormatted) }}
               </div>
               <div *ngIf="transaction.installmentInfo" class="installment-info">
                 {{ transaction.installmentInfo.currentInstallment }}/{{ transaction.installmentInfo.totalInstallments }}
@@ -345,6 +364,87 @@
           </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Layout Mobile em Cards (escondido no desktop) -->
+      <div *ngIf="!isLoadingTransactions && transactions.length > 0" class="transactions-mobile-layout">
+        <div *ngFor="let transaction of transactions"
+             class="transaction-card"
+             [class.income-card]="transaction.type === TransactionType.INCOME"
+             [class.expense-card]="transaction.type === TransactionType.EXPENSE">
+
+          <!-- Header do Card -->
+          <div class="transaction-card-header">
+            <div class="transaction-card-main">
+              <div class="transaction-card-title" (click)="viewTransactionDetails(transaction)">
+                {{ transaction.description }}
+              </div>
+              <div class="transaction-card-amount"
+                   [class.income-amount]="transaction.type === TransactionType.INCOME && transaction.status === 'PAID'"
+                   [class.expense-amount]="transaction.type === TransactionType.EXPENSE && transaction.status === 'PAID'"
+                   [class.pending-amount]="transaction.status === 'PENDING'"
+                   [class.failed-amount]="transaction.status === 'FAILED'">
+                {{ getDisplayValue(transaction.amountFormatted) }}
+              </div>
+            </div>
+            <div class="transaction-card-type"
+                 [class.income-type]="transaction.type === TransactionType.INCOME"
+                 [class.expense-type]="transaction.type === TransactionType.EXPENSE">
+              {{ getTransactionTypeLabel(transaction) }}
+            </div>
+          </div>
+
+          <!-- Parcelas (se existir) -->
+          <div *ngIf="transaction.installmentInfo" class="transaction-card-installment">
+            <i class="fas fa-credit-card"></i>
+            {{ transaction.installmentInfo.currentInstallment }}/{{ transaction.installmentInfo.totalInstallments }}
+          </div>
+
+          <!-- Detalhes do Card -->
+          <div class="transaction-card-details">
+            <div class="transaction-card-detail">
+              <div class="transaction-card-detail-label">Categoria</div>
+              <div class="transaction-card-detail-value">
+                {{ transaction.categoryName || 'Sem categoria' }}
+              </div>
+            </div>
+
+            <div class="transaction-card-detail">
+              <div class="transaction-card-detail-label">Vencimento</div>
+              <div class="transaction-card-detail-value">
+                {{ formatDate(transaction.dueDate) }}
+              </div>
+            </div>
+
+            <div class="transaction-card-detail">
+              <div class="transaction-card-detail-label">Status</div>
+              <div class="transaction-card-status"
+                   [class]="'status-' + transaction.status.toLowerCase()">
+                {{ getStatusLabel(transaction.status) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas (se existir) -->
+          <div *ngIf="transaction.notes" class="transaction-card-notes">
+            <i class="fas fa-sticky-note"></i>
+            {{ transaction.notes }}
+          </div>
+
+          <!-- Ações do Card -->
+          <div class="transaction-card-actions">
+            <button class="transaction-card-action edit-action"
+                    (click)="editTransaction(transaction)">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button class="transaction-card-action delete-action"
+                    (click)="confirmDeleteTransaction(transaction)">
+              <i class="fas fa-trash"></i>
+              Excluir
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Estado Vazio -->
@@ -437,4 +537,13 @@
     (editRequested)="onEditFromDetails($event)"
     (deleteRequested)="onDeleteFromDetails($event)"
   ></app-transaction-detail-modal>
+
+  <!-- Onboarding Tooltip -->
+  <app-onboarding-tooltip
+    [visible]="showOnboardingTooltip"
+    [tooltip]="currentOnboardingTooltip!"
+    (nextStep)="onTooltipNext()"
+    (skipTour)="onTooltipSkip()"
+    (closeTour)="onTooltipClose()"
+  ></app-onboarding-tooltip>
 </div>

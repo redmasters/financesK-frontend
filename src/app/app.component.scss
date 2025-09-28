@@ -4,6 +4,73 @@
   min-height: 100vh;
   background-color: #f5f7fa;
   font-family: 'Segoe UI', system-ui, sans-serif;
+  position: relative;
+}
+
+/* Botão Menu Hambúrguer */
+.mobile-menu-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #4361ee, #3f37c9);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+  transition: all 0.3s ease;
+
+  span {
+    width: 24px;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, #5a73f0, #4c44d1);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+  }
+
+  &.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+
+  &.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  &.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+  }
+}
+
+/* Overlay para Mobile */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 /* Sidebar Compartilhada */
@@ -18,6 +85,20 @@
   box-shadow: 2px 0 15px rgba(0,0,0,0.1);
   z-index: 100;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+
+  /* Estilo para menu móvel */
+  &.mobile-menu {
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.2);
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
 }
 
 .logo {
@@ -49,6 +130,7 @@
 .nav-links {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .nav-link {
@@ -74,25 +156,221 @@
   text-align: center;
 }
 
-/* Conteúdo Principal */
-.main-content {
-  margin-left: 240px;
-  flex: 1;
-  min-height: 100vh;
+/* Seção do Usuário */
+.user-section {
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 1rem;
+  position: relative; /* Necessário para o posicionamento absoluto do card */
 }
 
-/* Responsividade */
-@media (max-width: 1024px) {
+.user-profile {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+
+  &:hover {
+    background: rgba(255,255,255,0.05);
+  }
+}
+
+.user-avatar {
+  margin-right: 0.75rem;
+
+  i {
+    font-size: 2rem;
+    color: rgba(255,255,255,0.9);
+  }
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0; /* Permite que o texto seja truncado se necessário */
+
+  .user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.95);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.user-toggle {
+  margin-left: 0.5rem;
+
+  i {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    transition: transform 0.3s ease;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+/* Card do Usuário */
+.user-card {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  color: #333;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+  z-index: 1000;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-card-header {
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.user-card-avatar {
+  margin-right: 1rem;
+
+  i {
+    font-size: 2.5rem;
+    color: #4361ee;
+  }
+}
+
+.user-card-info {
+  flex: 1;
+
+  .user-card-name {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 0.25rem;
+  }
+
+  .user-card-email {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    opacity: 0.8;
+  }
+}
+
+.user-card-actions {
+  padding: 0.75rem 1.5rem 1.2rem;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(45deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  gap: 0.5rem;
+
+  &:hover {
+    background: linear-gradient(45deg, #c82333, #bd2130);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: 0.9rem;
+  }
+}
+
+/* Conteúdo Principal */
+.main-content {
+  margin-left: 240px; /* Espaço para a sidebar */
+  min-height: 100vh;
+  flex: 1;
+  background-color: #f5f7fa;
+  transition: margin-left 0.3s ease;
+
+  /* Quando não há sidebar (usuário deslogado), ocupa toda a largura */
+  &.full-width {
+    margin-left: 0;
+  }
+}
+
+/* Responsividade Aprimorada */
+
+/* Tablet - Menu compacto */
+@media (max-width: 1024px) and (min-width: 769px) {
   .sidebar {
     width: 70px;
-  }
 
-  .logo span {
-    display: none;
-  }
+    .logo span {
+      display: none;
+    }
 
-  .nav-link span {
-    display: none;
+    .nav-link span {
+      display: none;
+    }
+
+    .user-info {
+      display: none;
+    }
+
+    .user-toggle {
+      display: none;
+    }
+
+    .user-profile {
+      justify-content: center;
+      padding: 1rem 0.5rem;
+    }
+
+    .user-card {
+      left: 100%;
+      bottom: 0;
+      width: 280px;
+      border-radius: 8px 0 0 8px;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+    }
   }
 
   .main-content {
@@ -100,13 +378,74 @@
   }
 }
 
+/* Mobile - Menu hambúrguer */
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
+  .main-content {
+    margin-left: 0;
+    padding-top: 80px; /* Espaço para o botão hambúrguer */
+  }
+
+  .sidebar.mobile-menu {
+    width: 280px; /* Largura maior no mobile para melhor usabilidade */
+  }
+
+  /* Ajustes para o card do usuário no mobile */
+  .user-card {
+    left: 0;
+    right: 0;
+    width: auto;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  /* Garantir que todas as informações do usuário apareçam no mobile */
+  .sidebar.mobile-menu .user-info {
+    display: block;
+  }
+
+  .sidebar.mobile-menu .user-toggle {
+    display: block;
+  }
+
+  .sidebar.mobile-menu .logo span {
+    display: inline;
+  }
+
+  .sidebar.mobile-menu .nav-link span {
+    display: inline;
+  }
+}
+
+/* Ajustes extras para telas muito pequenas */
+@media (max-width: 480px) {
+  .mobile-menu-toggle {
+    width: 45px;
+    height: 45px;
+    top: 15px;
+    left: 15px;
+
+    span {
+      width: 20px;
+    }
+  }
+
+  .sidebar.mobile-menu {
+    width: 100vw; /* Ocupa toda a tela em dispositivos muito pequenos */
   }
 
   .main-content {
-    margin-left: 0;
+    padding-top: 75px;
   }
 }
 

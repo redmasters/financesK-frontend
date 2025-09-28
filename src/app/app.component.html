@@ -1,38 +1,107 @@
 <div class="app-layout">
-  <!-- Sidebar Compartilhada -->
-  <div class="sidebar">
+  <!-- Botão Menu Hambúrguer (apenas no mobile quando logado) -->
+  <button
+    class="mobile-menu-toggle"
+    *ngIf="shouldShowSidebar && isMobile"
+    (click)="toggleMobileMenu()"
+    [class.active]="mobileMenuOpen"
+    aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Overlay para fechar o menu no mobile -->
+  <div
+    class="mobile-overlay"
+    *ngIf="shouldShowSidebar && isMobile && mobileMenuOpen"
+    (click)="onOverlayClick()">
+  </div>
+
+  <!-- Sidebar Compartilhada - só aparece quando deve mostrar sidebar -->
+  <div class="sidebar"
+       *ngIf="shouldShowSidebar"
+       [class.mobile-open]="mobileMenuOpen"
+       [class.mobile-menu]="isMobile">
     <div class="logo">
       <i class="fas fa-wallet"></i>
-      <a routerLink="/home" class="logo-link">
+      <a routerLink="/home" class="logo-link" (click)="closeMobileMenu()">
         <span>FinancesK</span>
       </a>
     </div>
     <div class="nav-links">
-      <a routerLink="/home" class="nav-link" routerLinkActive="active">
+      <a routerLink="/home"
+         class="nav-link"
+         routerLinkActive="active"
+         (click)="closeMobileMenu()">
         <i class="fas fa-home"></i>
         <span>Dashboard</span>
       </a>
-      <a routerLink="/accounts" class="nav-link" routerLinkActive="active">
+      <a routerLink="/accounts"
+         class="nav-link"
+         routerLinkActive="active"
+         (click)="closeMobileMenu()">
         <i class="fas fa-university"></i>
         <span>Contas Bancárias</span>
       </a>
-      <a href="#" class="nav-link">
+      <a href="#"
+         class="nav-link"
+         (click)="closeMobileMenu()">
         <i class="fas fa-chart-line"></i>
         <span>Relatórios</span>
       </a>
-      <a routerLink="/categories" class="nav-link" routerLinkActive="active">
+      <a routerLink="/categories"
+         class="nav-link"
+         routerLinkActive="active"
+         (click)="closeMobileMenu()">
         <i class="fas fa-tags"></i>
         <span>Categorias</span>
       </a>
-      <a href="#" class="nav-link">
+      <a href="#"
+         class="nav-link"
+         (click)="closeMobileMenu()">
         <i class="fas fa-history"></i>
         <span>Histórico</span>
       </a>
     </div>
+
+    <!-- Seção do Usuário -->
+    <div class="user-section">
+      <div class="user-profile" (click)="toggleUserCard()">
+        <div class="user-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser?.username }}</span>
+        </div>
+        <div class="user-toggle">
+          <i class="fas fa-chevron-up" [class.rotated]="showUserCard"></i>
+        </div>
+      </div>
+
+      <!-- Card do Usuário (aparece ao clicar) -->
+      <div class="user-card" *ngIf="showUserCard">
+        <div class="user-card-header">
+          <div class="user-card-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="user-card-info">
+            <span class="user-card-name">{{ currentUser?.username }}</span>
+            <span class="user-card-email">{{ currentUser?.email }}</span>
+          </div>
+        </div>
+        <div class="user-card-actions">
+          <button class="logout-btn" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sair</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Conteúdo Principal -->
-  <div class="main-content">
+  <div class="main-content" [class.full-width]="!shouldShowSidebar">
     <router-outlet></router-outlet>
   </div>
 </div>
