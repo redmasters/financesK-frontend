@@ -7,14 +7,14 @@
 
     <form (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
-        <label for="username">Usuário</label>
+        <label for="usernameOrEmail">Usuário ou Email</label>
         <input
           type="text"
-          id="username"
-          name="username"
-          [(ngModel)]="credentials.username"
-          (input)="onUsernameInput()"
-          placeholder="Digite seu nome de usuário"
+          id="usernameOrEmail"
+          name="usernameOrEmail"
+          [(ngModel)]="usernameOrEmail"
+          (input)="onUsernameOrEmailInput()"
+          placeholder="Digite seu usuário ou email"
           required
           class="form-control"
           [class.error]="error"

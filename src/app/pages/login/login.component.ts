@@ -13,9 +13,11 @@ import { AuthService, LoginRequest } from '../../core/services/auth.service';
 })
 export class LoginComponent {
   credentials: LoginRequest = {
-    username: '',
     password: ''
   };
+
+  // Single input field for username or email
+  usernameOrEmail = '';
 
   isLoading = false;
   error = '';
@@ -38,13 +40,13 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    if (!this.credentials.username || !this.credentials.password) {
+    if (!this.usernameOrEmail || !this.credentials.password) {
       this.error = 'Por favor, preencha todos os campos';
       return;
     }
 
-    // Convert username to lowercase before submitting
-    this.credentials.username = this.credentials.username.toLowerCase();
+    // Determine if input is email or username and prepare credentials
+    this.prepareCredentials();
 
     this.isLoading = true;
     this.error = '';
@@ -56,7 +58,7 @@ export class LoginComponent {
       },
       error: (error) => {
         console.error('Erro no login:', error);
-        this.error = 'Usuário ou senha inválidos';
+        this.error = 'Usuário/email ou senha inválidos';
         this.isLoading = false;
       },
       complete: () => {
@@ -65,9 +67,28 @@ export class LoginComponent {
     });
   }
 
-  // Method to convert username to lowercase as user types
-  onUsernameInput(): void {
-    this.credentials.username = this.credentials.username.toLowerCase();
+  private prepareCredentials(): void {
+    // Reset credentials
+    this.credentials.username = undefined;
+    this.credentials.email = undefined;
+
+    // Check if input is email format
+    if (this.isValidEmail(this.usernameOrEmail)) {
+      this.credentials.email = this.usernameOrEmail.toLowerCase();
+    } else {
+      this.credentials.username = this.usernameOrEmail.toLowerCase();
+    }
+  }
+
+  private isValidEmail(input: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(input);
+  }
+
+  // Method to handle input changes
+  onUsernameOrEmailInput(): void {
+    // Convert to lowercase as user types
+    this.usernameOrEmail = this.usernameOrEmail.toLowerCase();
     this.clearError();
   }
 
@@ -119,11 +140,6 @@ export class LoginComponent {
         this.isResettingPassword = false;
       }
     });
-  }
-
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
   }
 
   clearResetError(): void {

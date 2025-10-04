@@ -14,7 +14,8 @@ export interface User {
 }
 
 export interface LoginRequest {
-  username: string;
+  username?: string;
+  email?: string;
   password: string;
 }
 
@@ -104,7 +105,8 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<User> {
-    this.logger.logAuthAttempt(credentials.username);
+    const identifier = credentials.username || credentials.email || 'unknown';
+    this.logger.logAuthAttempt(identifier);
 
     return this.http.post<User>(`${this.API_URL}/login`, credentials)
       .pipe(
