@@ -13,7 +13,7 @@
           id="username"
           name="username"
           [(ngModel)]="credentials.username"
-          (input)="clearError()"
+          (input)="onUsernameInput()"
           placeholder="Digite seu nome de usuário"
           required
           class="form-control"

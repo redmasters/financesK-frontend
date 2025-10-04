@@ -43,6 +43,9 @@ export class LoginComponent {
       return;
     }
 
+    // Convert username to lowercase before submitting
+    this.credentials.username = this.credentials.username.toLowerCase();
+
     this.isLoading = true;
     this.error = '';
 
@@ -60,6 +63,12 @@ export class LoginComponent {
         this.isLoading = false;
       }
     });
+  }
+
+  // Method to convert username to lowercase as user types
+  onUsernameInput(): void {
+    this.credentials.username = this.credentials.username.toLowerCase();
+    this.clearError();
   }
 
   clearError(): void {

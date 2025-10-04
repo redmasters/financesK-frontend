@@ -47,10 +47,9 @@
             id="username"
             name="username"
             [(ngModel)]="registerData.username"
-            (input)="clearError()"
+            (input)="onUsernameInput()"
             placeholder="Digite seu nome de usuário"
             required
-            minlength="3"
             class="form-control"
             [class.error]="error"
           >
