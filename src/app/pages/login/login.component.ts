@@ -20,6 +20,13 @@ export class LoginComponent {
   isLoading = false;
   error = '';
 
+  // Password reset properties
+  showPasswordReset = false;
+  resetEmail = '';
+  isResettingPassword = false;
+  resetMessage = '';
+  resetError = '';
+
   constructor(
     private authService: AuthService,
     private router: Router
@@ -57,5 +64,60 @@ export class LoginComponent {
 
   clearError(): void {
     this.error = '';
+  }
+
+  // Password reset methods
+  showResetPasswordForm(): void {
+    this.showPasswordReset = true;
+    this.clearError();
+  }
+
+  hideResetPasswordForm(): void {
+    this.showPasswordReset = false;
+    this.resetEmail = '';
+    this.resetMessage = '';
+    this.resetError = '';
+  }
+
+  onResetPassword(): void {
+    if (!this.resetEmail || !this.isValidEmail(this.resetEmail)) {
+      this.resetError = 'Por favor, digite um email válido';
+      return;
+    }
+
+    this.isResettingPassword = true;
+    this.resetError = '';
+    this.resetMessage = '';
+
+    this.authService.resetPassword(this.resetEmail).subscribe({
+      next: (response) => {
+        console.log('Password reset response:', response);
+        this.resetMessage = 'Se o email estiver cadastrado, um link de redefinição de senha será enviado.';
+        this.resetError = '';
+      },
+      error: (error) => {
+        console.error('Password reset error:', error);
+        if (error.error && typeof error.error === 'object' && error.error.error) {
+          this.resetError = error.error.error;
+        } else if (error.error && typeof error.error === 'string') {
+          this.resetError = error.error;
+        } else {
+          this.resetError = 'Erro ao solicitar redefinição de senha. Tente novamente.';
+        }
+        this.resetMessage = '';
+      },
+      complete: () => {
+        this.isResettingPassword = false;
+      }
+    });
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  clearResetError(): void {
+    this.resetError = '';
   }
 }

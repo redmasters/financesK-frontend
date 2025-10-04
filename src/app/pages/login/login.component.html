@@ -60,6 +60,18 @@
         </button>
       </div>
 
+      <!-- Forgot Password Link -->
+      <div class="forgot-password">
+        <button
+          type="button"
+          class="forgot-password-link"
+          (click)="showResetPasswordForm()"
+        >
+          <i class="fas fa-key"></i>
+          Esqueci minha senha
+        </button>
+      </div>
+
       <!-- Register Link -->
       <div class="form-footer">
         <div class="register-section">
@@ -81,5 +93,83 @@
         </div>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div *ngIf="showPasswordReset" class="modal-overlay" (click)="hideResetPasswordForm()">
+  <div class="reset-password-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Redefinir Senha</h2>
+      <button
+        type="button"
+        class="close-button"
+        (click)="hideResetPasswordForm()"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <p class="reset-description">
+        Digite seu email para receber um link de redefinição de senha.
+      </p>
+
+      <form (ngSubmit)="onResetPassword()" class="reset-form">
+        <div class="form-group">
+          <label for="resetEmail">Email</label>
+          <input
+            type="email"
+            id="resetEmail"
+            name="resetEmail"
+            [(ngModel)]="resetEmail"
+            (input)="clearResetError()"
+            placeholder="Digite seu email"
+            required
+            class="form-control"
+            [class.error]="resetError"
+          >
+        </div>
+
+        <!-- Reset Error Message -->
+        <div *ngIf="resetError" class="error-message">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ resetError }}
+        </div>
+
+        <!-- Reset Success Message -->
+        <div *ngIf="resetMessage" class="success-message">
+          <i class="fas fa-check-circle"></i>
+          {{ resetMessage }}
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="isResettingPassword"
+          >
+            <span *ngIf="!isResettingPassword">
+              <i class="fas fa-paper-plane"></i>
+              Enviar Link
+            </span>
+            <span *ngIf="isResettingPassword">
+              <i class="fas fa-spinner fa-spin"></i>
+              Enviando...
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="hideResetPasswordForm()"
+            [disabled]="isResettingPassword"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>

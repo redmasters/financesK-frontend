@@ -33,6 +33,14 @@ export interface CreateUserResponse {
   avatar?: string;
 }
 
+export interface PasswordResetResponse {
+  message: string;
+}
+
+export interface PasswordResetError {
+  error: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -195,6 +203,21 @@ export class AuthService {
           })
         );
     }
+  }
+
+  /**
+   * Solicita reset de senha
+   */
+  resetPassword(email: string): Observable<string> {
+    this.logger.debug('Password reset requested', { email });
+
+    return this.http.post(`${this.USERS_API_URL}/reset-password?email=${encodeURIComponent(email)}`, null, {
+      responseType: 'text'
+    }).pipe(
+      tap(response => {
+        this.logger.debug('Password reset response received', { response });
+      })
+    );
   }
 
   logout(): void {
