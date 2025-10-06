@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, PasswordChangeRequest } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-password-reset',
@@ -51,11 +52,8 @@ export class PasswordResetComponent implements OnInit {
     this.isCheckingToken = true;
     this.error = '';
 
-    console.log('Validating token:', this.token);
-
     this.authService.validateResetToken(this.token).subscribe({
       next: (isValid) => {
-        console.log('Token validation response:', isValid);
         this.isValidToken = isValid;
         this.isCheckingToken = false;
 
@@ -64,7 +62,10 @@ export class PasswordResetComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Token validation error:', error);
+        // Log only safe error properties in development
+        if (!environment.production) {
+          console.error('Token validation error - Status:', error.status, 'Message:', error.message);
+        }
         this.isCheckingToken = false;
         this.isValidToken = false;
 
@@ -93,7 +94,6 @@ export class PasswordResetComponent implements OnInit {
 
     this.authService.saveNewPassword(this.token, this.passwordData).subscribe({
       next: (response) => {
-        console.log('Password change successful:', response);
         this.successMessage = 'Senha alterada com sucesso! Você será redirecionado para o login.';
 
         // Redirect to login after 3 seconds
@@ -102,7 +102,11 @@ export class PasswordResetComponent implements OnInit {
         }, 3000);
       },
       error: (error) => {
-        console.error('Password change error:', error);
+        // Log only safe error properties in development
+        if (!environment.production) {
+          console.error('Password change error - Status:', error.status, 'Message:', error.message);
+        }
+
         if (error.error && typeof error.error === 'object' && error.error.error) {
           this.error = error.error.error;
         } else if (error.error && typeof error.error === 'string') {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, LoginRequest } from '../../core/services/auth.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -53,11 +54,17 @@ export class LoginComponent {
 
     this.authService.login(this.credentials).subscribe({
       next: (user) => {
-        console.log('Login realizado com sucesso:', user);
+        // Only log non-sensitive success info in development
+        if (!environment.production) {
+          console.log('Login successful for user ID:', user?.id);
+        }
         this.router.navigate(['/home']);
       },
       error: (error) => {
-        console.error('Erro no login:', error);
+        // Log only safe error properties in development
+        if (!environment.production) {
+          console.error('Login error - Status:', error.status, 'Message:', error.message);
+        }
         this.error = 'Usuário/email ou senha inválidos';
         this.isLoading = false;
       },
@@ -87,8 +94,7 @@ export class LoginComponent {
 
   // Method to handle input changes
   onUsernameOrEmailInput(): void {
-    // Convert to lowercase as user types
-    this.usernameOrEmail = this.usernameOrEmail.toLowerCase();
+    // Just clear error, don't modify the input as user types
     this.clearError();
   }
 
@@ -121,12 +127,15 @@ export class LoginComponent {
 
     this.authService.resetPassword(this.resetEmail).subscribe({
       next: (response) => {
-        console.log('Password reset response:', response);
         this.resetMessage = 'Se o email estiver cadastrado, um link de redefinição de senha será enviado.';
         this.resetError = '';
       },
       error: (error) => {
-        console.error('Password reset error:', error);
+        // Log only safe error properties in development
+        if (!environment.production) {
+          console.error('Password reset error - Status:', error.status, 'Message:', error.message);
+        }
+
         if (error.error && typeof error.error === 'object' && error.error.error) {
           this.resetError = error.error.error;
         } else if (error.error && typeof error.error === 'string') {
