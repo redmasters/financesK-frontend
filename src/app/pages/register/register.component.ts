@@ -45,6 +45,9 @@ export class RegisterComponent {
       return;
     }
 
+    // Convert username to lowercase before submitting
+    this.registerData.username = this.registerData.username.toLowerCase();
+
     this.isLoading = true;
     this.error = '';
 
@@ -129,6 +132,12 @@ export class RegisterComponent {
       return 'Dados inválidos. Verifique as informações inseridas';
     }
     return 'Erro ao criar conta. Tente novamente';
+  }
+
+  // Method to convert username to lowercase as user types
+  onUsernameInput(): void {
+    this.registerData.username = this.registerData.username.toLowerCase();
+    this.clearError();
   }
 
   clearError(): void {

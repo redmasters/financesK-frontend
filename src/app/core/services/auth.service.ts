@@ -14,7 +14,8 @@ export interface User {
 }
 
 export interface LoginRequest {
-  username: string;
+  username?: string;
+  email?: string;
   password: string;
 }
 
@@ -31,6 +32,23 @@ export interface CreateUserResponse {
   email: string;
   token: string;
   avatar?: string;
+}
+
+export interface PasswordResetResponse {
+  message: string;
+}
+
+export interface PasswordResetError {
+  error: string;
+}
+
+export interface PasswordChangeRequest {
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface PasswordChangeResponse {
+  message: string;
 }
 
 @Injectable({
@@ -87,7 +105,8 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<User> {
-    this.logger.logAuthAttempt(credentials.username);
+    const identifier = credentials.username || credentials.email || 'unknown';
+    this.logger.logAuthAttempt(identifier);
 
     return this.http.post<User>(`${this.API_URL}/login`, credentials)
       .pipe(
@@ -195,6 +214,69 @@ export class AuthService {
           })
         );
     }
+  }
+
+  /**
+   * Solicita reset de senha
+   */
+  resetPassword(email: string): Observable<string> {
+    this.logger.debug('Password reset requested', { email });
+
+    return this.http.post(`${this.USERS_API_URL}/reset-password?email=${encodeURIComponent(email)}`, null, {
+      responseType: 'text'
+    }).pipe(
+      tap(response => {
+        this.logger.debug('Password reset response received', { response });
+      })
+    );
+  }
+
+  /**
+   * Valida o token de reset de senha
+   */
+  validateResetToken(token: string): Observable<boolean> {
+    this.logger.debug('Validating reset token');
+
+    return this.http.post<boolean>(`${this.USERS_API_URL}/change-password?token=${encodeURIComponent(token)}`, null, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }).pipe(
+      tap(isValid => {
+        this.logger.debug('Token validation result', { isValid });
+      }),
+      // Handle the case where backend might return different response format
+      map(response => {
+        // If response is already boolean, return it
+        if (typeof response === 'boolean') {
+          return response;
+        }
+        // If response is an object with success property
+        if (typeof response === 'object' && response !== null && 'success' in response) {
+          return (response as any).success === true;
+        }
+        // Default to true if we get any successful response
+        return true;
+      })
+    );
+  }
+
+  /**
+   * Salva a nova senha usando o token de reset
+   */
+  saveNewPassword(token: string, passwordData: PasswordChangeRequest): Observable<PasswordChangeResponse> {
+    this.logger.debug('Saving new password');
+
+    return this.http.post<PasswordChangeResponse>(`${this.USERS_API_URL}/save-password?token=${encodeURIComponent(token)}`, passwordData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    }).pipe(
+      tap(response => {
+        this.logger.debug('Password change response', { response });
+      })
+    );
   }
 
   logout(): void {
