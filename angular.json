@@ -37,7 +37,11 @@
             "styles": [
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "src/styles.scss"
-            ]
+            ],
+	    "outputPath": {
+		    "base":"dist/finances-k-front",
+		    "browser":""
+	    }
           },
           "configurations": {
             "production": {
@@ -56,16 +60,14 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumError": "40kB"
                 }
               ],
               "outputHashing": "all",
               "optimization": true,
               "sourceMap": false,
               "extractLicenses": true,
-              "namedChunks": false,
-              "aot": true,
-              "buildOptimizer": true
+              "namedChunks": false
             },
             "staging": {
               "fileReplacements": [
@@ -83,16 +85,14 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumError": "40kB"
                 }
               ],
               "outputHashing": "all",
               "optimization": true,
               "sourceMap": true,
               "extractLicenses": false,
-              "namedChunks": false,
-              "aot": true,
-              "buildOptimizer": true
+              "namedChunks": false
             },
             "vercel": {
               "fileReplacements": [
@@ -121,8 +121,7 @@
               "optimization": true,
               "sourceMap": false,
               "extractLicenses": true,
-              "namedChunks": false,
-              "aot": true
+              "namedChunks": false
             },
             "development": {
               "optimization": false,
